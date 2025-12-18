@@ -2,10 +2,10 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { authService, UserProfile, LoginCredentials, RegisterData } from '../services/authService';
 
-// تعریف تایپ برای مقداری که Context نگه می‌دارد
+// Type definition for AuthContext value
 interface AuthContextType {
   user: UserProfile | null;
-  login: (username: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (userData: RegisterData) => Promise<void>;
   loading: boolean;
@@ -42,8 +42,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     initializeAuth();
   }, []);
 
-  const login = async (username: string, password: string) => {
-    await authService.login({ username, password });
+  const login = async (email: string, password: string) => {
+    await authService.login({ email, password });
     const userData = await authService.getCurrentUser();
     setUser(userData);
   };

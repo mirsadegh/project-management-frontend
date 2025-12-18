@@ -1,9 +1,9 @@
 // src/services/authService.ts
 import api from './api';
 
-// تعریف تایپ‌ها برای داده‌های ورودی و خروجی
+// Type definitions for input and output data
 export interface LoginCredentials {
-  username: string;
+  email: string;  // Backend uses email as USERNAME_FIELD
   password: string;
 }
 
