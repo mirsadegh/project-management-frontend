@@ -1,6 +1,6 @@
 // src/contexts/AuthContext.tsx
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { authService, UserProfile, LoginCredentials, RegisterData } from '../services/authService';
+import { authService, UserProfile, LoginCredentials, RegisterData } from '../../services/authService';
 
 // Type definition for AuthContext value
 interface AuthContextType {
