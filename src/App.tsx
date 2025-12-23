@@ -1,9 +1,11 @@
 // src/App.tsx
-import React, { ReactNode } from 'react';
+import React from 'react';
+import type { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './services/contexts/AuthContext';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard'; // فرض می‌کنیم این کامپوننت را دارید
+import './App.css';
 
 // تایپ کردن props برای ProtectedRoute
 interface ProtectedRouteProps {

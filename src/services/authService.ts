@@ -33,12 +33,14 @@ export const authService = {
   },
 
   async login(credentials: LoginCredentials): Promise<AuthTokens> {
-    const response = await api.post<AuthTokens>('/accounts/auth/login/', credentials);
-    
+    // Map email to username for API since backend uses email as USERNAME_FIELD
+    const loginData = { username: credentials.email, password: credentials.password };
+    const response = await api.post<AuthTokens>('/accounts/auth/login/', loginData);
+
     const { access, refresh } = response.data;
     localStorage.setItem('accessToken', access);
     localStorage.setItem('refreshToken', refresh);
-    
+
     return response.data;
   },
 
