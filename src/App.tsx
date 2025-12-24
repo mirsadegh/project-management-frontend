@@ -20,8 +20,9 @@ interface ProtectedRouteProps {
   children: ReactNode;
 }
 
+// ProtectedRoute - redirects to dashboard if not authenticated
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading, logout } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return <div className="page-loading">Loading...</div>;
@@ -44,7 +45,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           <Link to="/profile" className="user-link">
             {user.full_name || user.username}
           </Link>
-          <button onClick={logout} className="logout-button">Logout</button>
         </div>
       </nav>
       <main className="protected-content">{children}</main>
@@ -52,13 +52,41 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   );
 };
 
+// GuestRoute - redirects to dashboard if already authenticated
+const GuestRoute = ({ children }: ProtectedRouteProps) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div className="page-loading">Loading...</div>;
+  }
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <Login />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <GuestRoute>
+                <Register />
+              </GuestRoute>
+            }
+          />
           
           <Route
             path="/dashboard"
