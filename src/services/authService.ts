@@ -16,7 +16,18 @@ export interface UserProfile {
   id: number;
   username: string;
   email: string;
-  // ... هر فیلد دیگری که پروفایل کاربر شما دارد
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  role: string;
+  department: string;
+  is_available: boolean;
+  job_title: string;
+  phone_number: string | null;
+  bio: string;
+  profile_picture: string | null;
+  date_joined: string;
+  last_login: string | null;
 }
 
 export interface RegisterData {
@@ -33,9 +44,8 @@ export const authService = {
   },
 
   async login(credentials: LoginCredentials): Promise<AuthTokens> {
-    // Map email to username for API since backend uses email as USERNAME_FIELD
-    const loginData = { username: credentials.email, password: credentials.password };
-    const response = await api.post<AuthTokens>('/accounts/auth/login/', loginData);
+    // Backend uses email as USERNAME_FIELD, so send email directly
+    const response = await api.post<AuthTokens>('/accounts/auth/login/', credentials);
 
     const { access, refresh } = response.data;
     localStorage.setItem('accessToken', access);
@@ -50,12 +60,12 @@ export const authService = {
   },
 
   async getCurrentUser(): Promise<UserProfile> {
-    const response = await api.get<UserProfile>('/accounts/profile/');
+    const response = await api.get<UserProfile>('/accounts/users/me/');
     return response.data;
   },
 
   async updateProfile(userData: Partial<UserProfile>): Promise<UserProfile> {
-    const response = await api.patch<UserProfile>('/accounts/profile/', userData);
+    const response = await api.patch<UserProfile>('/accounts/users/me/', userData);
     return response.data;
   },
 
