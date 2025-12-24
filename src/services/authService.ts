@@ -34,7 +34,8 @@ export interface RegisterData {
   username: string;
   password: string;
   email: string;
-  // ... فیلدهای دیگر برای ثبت‌نام
+  first_name?: string;
+  last_name?: string;
 }
 
 export const authService = {

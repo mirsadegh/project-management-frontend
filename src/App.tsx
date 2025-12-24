@@ -4,11 +4,18 @@ import type { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './services/contexts/AuthContext';
 import Login from './components/Login';
+import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Profile from './components/Profile';
+import ProjectsList from './components/ProjectsList';
+import ProjectDetail from './components/ProjectDetail';
+import TaskBoard from './components/TaskBoard';
+import TeamsList from './components/TeamsList';
+import TeamDetail from './components/TeamDetail';
+import NotificationsList from './components/NotificationsList';
 import './App.css';
 
-// تایپ کردن props برای ProtectedRoute
+// Type for ProtectedRoute props
 interface ProtectedRouteProps {
   children: ReactNode;
 }
@@ -17,7 +24,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading, logout } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="page-loading">Loading...</div>;
   }
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -29,10 +36,14 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         <div className="nav-brand">Project Management</div>
         <div className="nav-links">
           <Link to="/dashboard" className="nav-link">Dashboard</Link>
-          <Link to="/profile" className="nav-link">Profile</Link>
+          <Link to="/projects" className="nav-link">Projects</Link>
+          <Link to="/teams" className="nav-link">Teams</Link>
+          <Link to="/notifications" className="nav-link">Notifications</Link>
         </div>
         <div className="nav-user">
-          <span className="user-name">{user.full_name || user.username}</span>
+          <Link to="/profile" className="user-link">
+            {user.full_name || user.username}
+          </Link>
           <button onClick={logout} className="logout-button">Logout</button>
         </div>
       </nav>
@@ -47,6 +58,8 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
           <Route
             path="/dashboard"
             element={
@@ -63,6 +76,55 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <ProjectsList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:id"
+            element={
+              <ProtectedRoute>
+                <ProjectDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:projectId/tasks"
+            element={
+              <ProtectedRoute>
+                <TaskBoard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teams"
+            element={
+              <ProtectedRoute>
+                <TeamsList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teams/:id"
+            element={
+              <ProtectedRoute>
+                <TeamDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationsList />
+              </ProtectedRoute>
+            }
+          />
+          
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </AuthProvider>

@@ -1,6 +1,6 @@
 // src/components/Login.tsx
-import React, { useState, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../services/contexts/AuthContext';
 
 const Login = () => {
@@ -10,7 +10,7 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -24,7 +24,8 @@ const Login = () => {
 
   return (
     <div className="login-container">
-      <h2>Login</h2>
+      <h2>Welcome Back</h2>
+      <p className="login-subtitle">Sign in to your account</p>
       {error && <div className="error">{error}</div>}
       <form onSubmit={handleSubmit}>
         <input
@@ -41,8 +42,11 @@ const Login = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit">Login</button>
+        <button type="submit">Sign In</button>
       </form>
+      <p className="login-footer">
+        Don't have an account? <Link to="/register">Create one</Link>
+      </p>
     </div>
   );
 };
