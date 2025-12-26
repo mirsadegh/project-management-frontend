@@ -1,26 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { taskService, type Task, type TaskList } from '../services/taskService';
+import { projectService, type Project } from '../services/projectService';
 
 const TaskBoard: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [taskLists, setTaskLists] = useState<TaskList[]>([]);
+  const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (projectId) {
-      loadTaskLists(parseInt(projectId));
+      loadProjectAndTasks(projectId);
     }
   }, [projectId]);
 
-  const loadTaskLists = async (id: number) => {
+  const loadProjectAndTasks = async (projectSlug: string) => {
     try {
       setLoading(true);
-      const data = await taskService.getTaskLists(id);
-      setTaskLists(data);
+      // First load the project to get its ID
+      const projectData = await projectService.getProject(projectSlug);
+      setProject(projectData);
+
+      // Then load task lists using the project ID
+      const taskListsData = await taskService.getTaskLists(projectData.id);
+      setTaskLists(taskListsData);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to load tasks');
+      setError(err.response?.data?.detail || 'Failed to load project or tasks');
     } finally {
       setLoading(false);
     }

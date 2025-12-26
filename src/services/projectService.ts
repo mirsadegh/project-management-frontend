@@ -46,19 +46,31 @@ export interface ProjectFilters {
   search?: string;
 }
 
+export interface PaginatedProjectsResponse {
+  pagination: {
+    count: number;
+    total_pages: number;
+    current_page: number;
+    page_size: number;
+    next: string | null;
+    previous: string | null;
+  };
+  projects: Project[];
+}
+
 export const projectService = {
   async getProjects(filters?: ProjectFilters): Promise<Project[]> {
     const params = new URLSearchParams();
     if (filters?.status) params.append('status', filters.status);
     if (filters?.priority) params.append('priority', filters.priority);
     if (filters?.search) params.append('search', filters.search);
-    
-    const response = await api.get<Project[]>(`/projects/projects/?${params.toString()}`);
-    return response.data;
+
+    const response = await api.get<PaginatedProjectsResponse>(`/projects/projects/?${params.toString()}`);
+    return response.data.projects;
   },
 
-  async getProject(id: number): Promise<Project> {
-    const response = await api.get<Project>(`/projects/projects/${id}/`);
+  async getProject(slug: string): Promise<Project> {
+    const response = await api.get<Project>(`/projects/projects/${slug}/`);
     return response.data;
   },
 
@@ -67,17 +79,17 @@ export const projectService = {
     return response.data;
   },
 
-  async updateProject(id: number, data: Partial<Project>): Promise<Project> {
-    const response = await api.patch<Project>(`/projects/projects/${id}/`, data);
+  async updateProject(slug: string, data: Partial<Project>): Promise<Project> {
+    const response = await api.patch<Project>(`/projects/projects/${slug}/`, data);
     return response.data;
   },
 
-  async deleteProject(id: number): Promise<void> {
-    await api.delete(`/projects/projects/${id}/`);
+  async deleteProject(slug: string): Promise<void> {
+    await api.delete(`/projects/projects/${slug}/`);
   },
 
-  async getProjectMembers(projectId: number): Promise<ProjectMember[]> {
-    const response = await api.get<any>(`/projects/projects/${projectId}/`);
+  async getProjectMembers(slug: string): Promise<ProjectMember[]> {
+    const response = await api.get<any>(`/projects/projects/${slug}/`);
     return response.data.members || [];
   },
 };

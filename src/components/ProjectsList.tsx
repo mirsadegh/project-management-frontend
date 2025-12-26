@@ -90,7 +90,7 @@ const ProjectsList: React.FC = () => {
       ) : (
         <div className="projects-grid">
           {filteredProjects.map((project) => (
-            <Link to={`/projects/${project.id}`} key={project.id} className="project-card">
+            <Link to={`/projects/${project.slug}`} key={project.id} className="project-card">
               <div className="project-card-header">
                 <h3 className="project-name">{project.name}</h3>
                 <div className="project-badges">
@@ -194,6 +194,8 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onCrea
     start_date: '',
     due_date: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,7 +250,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onCrea
               <label>Priority</label>
               <select
                 value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' })}
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>

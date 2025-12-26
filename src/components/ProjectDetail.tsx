@@ -11,14 +11,14 @@ const ProjectDetail: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      loadProject(parseInt(id));
+      loadProject(id);
     }
   }, [id]);
 
-  const loadProject = async (projectId: number) => {
+  const loadProject = async (projectSlug: string) => {
     try {
       setLoading(true);
-      const data = await projectService.getProject(projectId);
+      const data = await projectService.getProject(projectSlug);
       setProject(data);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load project');
@@ -109,7 +109,7 @@ const ProjectDetail: React.FC = () => {
           <div>
             <h3>Project Overview</h3>
             <p>Project detail content will go here.</p>
-            <Link to={`/projects/${project.id}/tasks`} className="action-btn">
+            <Link to={`/projects/${project.slug}/tasks`} className="action-btn">
               Open Task Board
             </Link>
           </div>
@@ -118,7 +118,7 @@ const ProjectDetail: React.FC = () => {
           <div>
             <h3>Tasks</h3>
             <p>Tasks management will go here.</p>
-            <Link to={`/projects/${project.id}/tasks`} className="action-btn">
+            <Link to={`/projects/${project.slug}/tasks`} className="action-btn">
               View Task Board
             </Link>
           </div>

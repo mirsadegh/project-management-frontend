@@ -1,6 +1,7 @@
 // src/services/api.ts
 
-import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 // خواندن آدرس پایه API از متغیرهای محیطی Vite
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -16,7 +17,7 @@ const api: AxiosInstance = axios.create({
 // --- اینترفالر درخواست (Request Interceptor) ---
 // این تابع قبل از ارسال هر درخواست اجرا می‌شود
 api.interceptors.request.use(
-  (config: AxiosRequestConfig): AxiosRequestConfig => {
+  (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
     const token = localStorage.getItem('accessToken');
     // اگر توکن وجود داشت، آن را به هدر درخواست اضافه کن
     if (token) {
@@ -39,15 +40,25 @@ api.interceptors.response.use(
   // اگر پاسخ با خطا مواجه شد
   async (error: AxiosError) => {
     // نوع‌داده‌ی originalRequest را گسترش می‌دهیم تا پراپرتی _retry را بتوان به آن اضافه کرد
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     // اگر خطا 401 (Unauthorized) بود و این درخواست برای اولین بار بود که تلاش می‌کند
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true; // جلوگیری از یک حلقه بی‌نهایت از تلاش‌ها
 
+      // بررسی وجود توکن رفرش قبل از تلاش برای رفرش
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      if (!refreshToken) {
+        // اگر توکن رفرش وجود نداشت، توکن‌ها را پاک کن و خطا را برگردان
+        console.error("No refresh token available. User needs to login.");
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        return Promise.reject(error);
+      }
+
       try {
         // تلاش برای رفرش کردن توکن با استفاده از refresh token
-        const refreshToken = localStorage.getItem('refreshToken');
         const response = await axios.post<{ access: string }>(`${API_BASE_URL}/accounts/auth/refresh/`, {
           refresh: refreshToken,
         });
