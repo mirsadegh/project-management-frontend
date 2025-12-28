@@ -12,15 +12,15 @@ const TeamDetail: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      loadTeam(parseInt(id));
+      loadTeam(id);
     }
   }, [id]);
 
-  const loadTeam = async (teamId: number) => {
+  const loadTeam = async (teamSlug: string) => {
     try {
       setLoading(true);
-      const teamData = await teamService.getTeam(teamId);
-      const membersData = await teamService.getTeamMembers(teamId);
+      const teamData = await teamService.getTeam(teamSlug);
+      const membersData = await teamService.getTeamMembers(teamSlug);
       setTeam(teamData);
       setMembers(membersData);
     } catch (err: any) {

@@ -4,9 +4,19 @@ export interface Team {
   id: number;
   name: string;
   description: string;
+  slug: string;
   created_at: string;
   updated_at: string;
   member_count?: number;
+}
+
+export interface PaginatedTeamsResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  total_pages: number;
+  current_page: number;
+  results: Team[];
 }
 
 export interface TeamMembership {
@@ -47,12 +57,12 @@ export interface UserSummary {
 
 export const teamService = {
   async getTeams(): Promise<Team[]> {
-    const response = await api.get<Team[]>('/teams/teams/');
-    return response.data;
+    const response = await api.get<PaginatedTeamsResponse>('/teams/teams/');
+    return response.data.results;
   },
 
-  async getTeam(teamId: number): Promise<Team> {
-    const response = await api.get<Team>(`/teams/teams/${teamId}/`);
+  async getTeam(slug: string): Promise<Team> {
+    const response = await api.get<Team>(`/teams/teams/${slug}/`);
     return response.data;
   },
 
@@ -61,17 +71,17 @@ export const teamService = {
     return response.data;
   },
 
-  async updateTeam(teamId: number, data: Partial<Team>): Promise<Team> {
-    const response = await api.patch<Team>(`/teams/teams/${teamId}/`, data);
+  async updateTeam(slug: string, data: Partial<Team>): Promise<Team> {
+    const response = await api.patch<Team>(`/teams/teams/${slug}/`, data);
     return response.data;
   },
 
-  async deleteTeam(teamId: number): Promise<void> {
-    await api.delete(`/teams/teams/${teamId}/`);
+  async deleteTeam(slug: string): Promise<void> {
+    await api.delete(`/teams/teams/${slug}/`);
   },
 
-  async getTeamMembers(teamId: number): Promise<TeamMembership[]> {
-    const response = await api.get<any>(`/teams/teams/${teamId}/`);
+  async getTeamMembers(slug: string): Promise<TeamMembership[]> {
+    const response = await api.get<any>(`/teams/teams/${slug}/`);
     return response.data.members || [];
   },
 

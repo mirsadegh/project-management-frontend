@@ -54,10 +54,37 @@ export interface TaskFilters {
   assignee?: number;
 }
 
+export interface PaginatedTaskListResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  total_pages: number;
+  current_page: number;
+  results: TaskList[];
+}
+
+export interface PaginatedTaskResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  total_pages: number;
+  current_page: number;
+  results: Task[];
+}
+
+export interface PaginatedTaskLabelResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  total_pages: number;
+  current_page: number;
+  results: TaskLabel[];
+}
+
 export const taskService = {
   async getTaskLists(projectId: number): Promise<TaskList[]> {
-    const response = await api.get<TaskList[]>(`/tasks/task-lists/?project=${projectId}`);
-    return response.data;
+    const response = await api.get<PaginatedTaskListResponse>(`/tasks/task-lists/?project=${projectId}`);
+    return response.data.results;
   },
 
   async getTasks(projectId: number, filters?: TaskFilters): Promise<Task[]> {
@@ -65,9 +92,9 @@ export const taskService = {
     if (filters?.status) params.append('status', filters.status);
     if (filters?.priority) params.append('priority', filters.priority);
     if (filters?.assignee) params.append('assignee', filters.assignee.toString());
-    
-    const response = await api.get<Task[]>(`/tasks/tasks/?project=${projectId}&${params.toString()}`);
-    return response.data;
+
+    const response = await api.get<PaginatedTaskResponse>(`/tasks/tasks/?project=${projectId}&${params.toString()}`);
+    return response.data.results;
   },
 
   async getTask(taskId: number): Promise<Task> {
@@ -98,7 +125,7 @@ export const taskService = {
   },
 
   async getLabels(projectId: number): Promise<TaskLabel[]> {
-    const response = await api.get<TaskLabel[]>(`/tasks/labels/?project=${projectId}`);
-    return response.data;
+    const response = await api.get<PaginatedTaskLabelResponse>(`/tasks/labels/?project=${projectId}`);
+    return response.data.results;
   },
 };

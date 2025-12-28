@@ -64,7 +64,7 @@ const TeamsList: React.FC = () => {
       ) : (
         <div className="teams-grid">
           {filteredTeams.map((team) => (
-            <Link to={`/teams/${team.id}`} key={team.id} className="team-card">
+            <Link to={`/teams/${team.slug}`} key={team.id} className="team-card">
               <h3>{team.name}</h3>
               <p>{team.description || 'No description provided'}</p>
               <div className="team-members-preview">
