@@ -8,6 +8,7 @@ export interface Task {
   task_list: number | null;
   parent_task: number | null;
   assignee: UserSummary | null;
+  assignee_id?: number | null;
   created_by: UserSummary;
   status: 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'COMPLETED' | 'BLOCKED';
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';

@@ -93,4 +93,11 @@ export const authService = {
   isAuthenticated(): boolean {
     return !!localStorage.getItem('accessToken');
   },
+
+  async getUsers(): Promise<Array<{ id: number; username: string; full_name: string; email: string }>> {
+    const response = await api.get<{
+      results: Array<{ id: number; username: string; full_name: string; email: string }>;
+    }>('/accounts/users/');
+    return response.data.results || [];
+  },
 };

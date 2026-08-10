@@ -2,6 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { taskService, type Task, type TaskList } from '../services/taskService';
 import { projectService, type Project } from '../services/projectService';
+import { authService } from '../services/authService';
+
+type ApiError = {
+  response?: { data?: { detail?: string; name?: string[]; title?: string[] } };
+};
+
+const getErrorMessage = (err: unknown, fallback: string): string => {
+  const data = (err as ApiError).response?.data;
+  return data?.title?.[0] || data?.name?.[0] || data?.detail || fallback;
+};
+
+const PRIORITIES: Task['priority'][] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+const STATUSES: Task['status'][] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'COMPLETED', 'BLOCKED'];
 
 const TaskBoard: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -9,6 +22,26 @@ const TaskBoard: React.FC = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [showListForm, setShowListForm] = useState(false);
+  const [listName, setListName] = useState('');
+  const [listDesc, setListDesc] = useState('');
+  const [creatingList, setCreatingList] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [users, setUsers] = useState<Array<{ id: number; username: string; full_name: string }>>([]);
+  const [taskForm, setTaskForm] = useState({
+    task_list: '' as number | '',
+    title: '',
+    description: '',
+    priority: 'MEDIUM' as Task['priority'],
+    status: 'TODO' as Task['status'],
+    due_date: '',
+    assignee_id: '' as number | '',
+  });
+  const [creatingTask, setCreatingTask] = useState(false);
+  const [taskError, setTaskError] = useState<string | null>(null);
 
   useEffect(() => {
     if (projectId) {
@@ -19,15 +52,13 @@ const TaskBoard: React.FC = () => {
   const loadProjectAndTasks = async (projectSlug: string) => {
     try {
       setLoading(true);
-      // First load the project to get its ID
       const projectData = await projectService.getProject(projectSlug);
       setProject(projectData);
 
-      // Then load task lists using the project ID
       const taskListsData = await taskService.getTaskLists(projectData.id);
       setTaskLists(taskListsData);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to load project or tasks');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to load project or tasks'));
     } finally {
       setLoading(false);
     }
@@ -40,6 +71,90 @@ const TaskBoard: React.FC = () => {
       case 'HIGH': return '#f97316';
       case 'URGENT': return '#ef4444';
       default: return '#6b7280';
+    }
+  };
+
+  const openListForm = () => {
+    setListName('');
+    setListDesc('');
+    setListError(null);
+    setShowListForm(true);
+  };
+
+  const handleCreateList = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!project || !listName.trim()) {
+      setListError('List name is required');
+      return;
+    }
+
+    setCreatingList(true);
+    setListError(null);
+    try {
+      await taskService.createTaskList(project.id, listName.trim());
+      setShowListForm(false);
+      await loadProjectAndTasks(projectId!);
+    } catch (err) {
+      setListError(getErrorMessage(err, 'Failed to create task list'));
+    } finally {
+      setCreatingList(false);
+    }
+  };
+
+  const openTaskModal = async (presetListId?: number) => {
+    if (taskLists.length === 0) {
+      setTaskError('Create a task list first');
+      return;
+    }
+    setTaskError(null);
+    setTaskForm({
+      task_list: presetListId ?? taskLists[0].id,
+      title: '',
+      description: '',
+      priority: 'MEDIUM',
+      status: 'TODO',
+      due_date: '',
+      assignee_id: '',
+    });
+    try {
+      const data = await authService.getUsers();
+      setUsers(data);
+    } catch {
+      setUsers([]);
+    }
+    setShowTaskModal(true);
+  };
+
+  const handleCreateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!project || !taskForm.title.trim()) {
+      setTaskError('Task title is required');
+      return;
+    }
+    if (taskForm.task_list === '') {
+      setTaskError('Please select a task list');
+      return;
+    }
+
+    setCreatingTask(true);
+    setTaskError(null);
+    try {
+      await taskService.createTask({
+        project: project.id,
+        title: taskForm.title.trim(),
+        description: taskForm.description.trim(),
+        task_list: Number(taskForm.task_list),
+        priority: taskForm.priority,
+        status: taskForm.status,
+        due_date: taskForm.due_date || null,
+        assignee_id: taskForm.assignee_id === '' ? null : Number(taskForm.assignee_id),
+      });
+      setShowTaskModal(false);
+      await loadProjectAndTasks(projectId!);
+    } catch (err) {
+      setTaskError(getErrorMessage(err, 'Failed to create task'));
+    } finally {
+      setCreatingTask(false);
     }
   };
 
@@ -59,16 +174,49 @@ const TaskBoard: React.FC = () => {
           <h1>Task Board</h1>
         </div>
         <div className="header-actions">
-          <button className="btn-primary">+ Add Task</button>
+          <button className="btn-primary" onClick={() => openTaskModal()}> + Add Task</button>
         </div>
       </div>
+
+      {showListForm && (
+        <form className="create-list-form" onSubmit={handleCreateList}>
+          {listError && <div className="error-message">{listError}</div>}
+          <div className="form-group">
+            <label>List Name</label>
+            <input
+              type="text"
+              value={listName}
+              onChange={(e) => setListName(e.target.value)}
+              placeholder="e.g. To Do"
+              disabled={creatingList}
+            />
+          </div>
+          <div className="form-group">
+            <label>Description (optional)</label>
+            <input
+              type="text"
+              value={listDesc}
+              onChange={(e) => setListDesc(e.target.value)}
+              disabled={creatingList}
+            />
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={() => setShowListForm(false)} disabled={creatingList}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary" disabled={creatingList}>
+              {creatingList ? 'Creating...' : 'Create List'}
+            </button>
+          </div>
+        </form>
+      )}
 
       {taskLists.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📋</div>
           <h3>No task lists yet</h3>
           <p>Create your first task list to start organizing tasks</p>
-          <button className="btn-primary">+ Add Task List</button>
+          <button className="btn-primary" onClick={openListForm}>+ Add Task List</button>
         </div>
       ) : (
         <div className="task-board">
@@ -110,10 +258,112 @@ const TaskBoard: React.FC = () => {
                     </div>
                   </div>
                 ))}
-                <button className="add-task-btn">+ Add Task</button>
+                <button className="add-task-btn" onClick={() => openTaskModal(list.id)}>+ Add Task</button>
               </div>
             </div>
           ))}
+          <button className="btn-primary add-list-btn" onClick={openListForm}>+ Add Task List</button>
+        </div>
+      )}
+
+      {showTaskModal && (
+        <div className="modal-overlay" onClick={() => setShowTaskModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Add Task</h3>
+            {taskError && <div className="error-message">{taskError}</div>}
+            <form onSubmit={handleCreateTask}>
+              <div className="form-group">
+                <label>Task List</label>
+                <select
+                  value={taskForm.task_list}
+                  onChange={(e) => setTaskForm({ ...taskForm, task_list: e.target.value === '' ? '' : Number(e.target.value) })}
+                  disabled={creatingTask}
+                  required
+                >
+                  {taskLists.map((l) => (
+                    <option key={l.id} value={l.id}>{l.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Title</label>
+                <input
+                  type="text"
+                  value={taskForm.title}
+                  onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+                  placeholder="Task title"
+                  disabled={creatingTask}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Description</label>
+                <textarea
+                  value={taskForm.description}
+                  onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                  disabled={creatingTask}
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Priority</label>
+                  <select
+                    value={taskForm.priority}
+                    onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as Task['priority'] })}
+                    disabled={creatingTask}
+                  >
+                    {PRIORITIES.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Status</label>
+                  <select
+                    value={taskForm.status}
+                    onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value as Task['status'] })}
+                    disabled={creatingTask}
+                  >
+                    {STATUSES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Due Date</label>
+                  <input
+                    type="date"
+                    value={taskForm.due_date}
+                    onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })}
+                    disabled={creatingTask}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Assignee (optional)</label>
+                  <select
+                    value={taskForm.assignee_id}
+                    onChange={(e) => setTaskForm({ ...taskForm, assignee_id: e.target.value === '' ? '' : Number(e.target.value) })}
+                    disabled={creatingTask}
+                  >
+                    <option value="">Unassigned</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>{u.full_name || u.username}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn-secondary" onClick={() => setShowTaskModal(false)} disabled={creatingTask}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary" disabled={creatingTask}>
+                  {creatingTask ? 'Creating...' : 'Create Task'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

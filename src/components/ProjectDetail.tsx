@@ -1,18 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { projectService, type Project } from '../services/projectService';
+import { projectService, type Project, type ProjectMember } from '../services/projectService';
+import { authService } from '../services/authService';
 import { useAuth } from '../services/contexts/AuthContext';
+
+type MemberRole = ProjectMember['role'];
+
+const ROLE_LABELS: Record<MemberRole, string> = {
+  OWNER: 'Owner',
+  MANAGER: 'Manager',
+  MEMBER: 'Member',
+  VIEWER: 'Viewer',
+};
 
 const ProjectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
+  const [members, setMembers] = useState<ProjectMember[]>([]);
+  const [users, setUsers] = useState<Array<{ id: number; username: string; full_name: string; email: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'files' | 'members'>('overview');
+  const [selectedUserId, setSelectedUserId] = useState<number | ''>('');
+  const [selectedRole, setSelectedRole] = useState<MemberRole>('MEMBER');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [memberError, setMemberError] = useState<string | null>(null);
+  const [memberSuccess, setMemberSuccess] = useState<string | null>(null);
 
   const canManage = user && (
+    user.role === 'ADMIN' ||
+    user.role === 'PM' ||
+    user.role === 'TL' ||
+    (project && (project.owner.id === user.id || (project.manager && project.manager.id === user.id)))
+  );
+
+  const canManageMembers = user && (
     user.role === 'ADMIN' ||
     user.role === 'PM' ||
     user.role === 'TL' ||
@@ -25,11 +49,33 @@ const ProjectDetail: React.FC = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (activeTab === 'members' && canManageMembers) {
+      loadUsers();
+    }
+  }, [activeTab, canManageMembers]);
+
+  const loadUsers = async () => {
+    try {
+      const data = await authService.getUsers();
+      setUsers(data);
+    } catch {
+      // Non-critical: the add form simply won't be populated.
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      loadProject(id);
+    }
+  }, [id]);
+
   const loadProject = async (projectSlug: string) => {
     try {
       setLoading(true);
       const data = await projectService.getProject(projectSlug);
       setProject(data);
+      setMembers(data.members || []);
     } catch (err) {
       const error = err as { response?: { data?: { detail?: string } } };
       setError(error.response?.data?.detail || 'Failed to load project');
@@ -45,6 +91,53 @@ const ProjectDetail: React.FC = () => {
   if (error || !project) {
     return <div className="error-message">{error || 'Project not found'}</div>;
   }
+
+  const memberUserIds = members.map((m) => m.user.id);
+  const availableUsers = users.filter((u) => !memberUserIds.includes(u.id));
+
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || selectedUserId === '') return;
+
+    setActionLoading(true);
+    setMemberError(null);
+    setMemberSuccess(null);
+    try {
+      const newMember = await projectService.addMember(id, Number(selectedUserId), selectedRole);
+      setMembers((prev) => [...prev, newMember]);
+      setSelectedUserId('');
+      setSelectedRole('MEMBER');
+      setMemberSuccess(`${newMember.user.full_name || newMember.user.username} added to the project.`);
+    } catch (err) {
+      const error = err as { response?: { data?: { detail?: string; user_id?: string[]; role?: string[] } } };
+      setMemberError(
+        error.response?.data?.detail ||
+        error.response?.data?.user_id?.[0] ||
+        error.response?.data?.role?.[0] ||
+        'Failed to add member'
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRemoveMember = async (memberId: number) => {
+    if (!id) return;
+
+    setActionLoading(true);
+    setMemberError(null);
+    setMemberSuccess(null);
+    try {
+      await projectService.removeMember(id, memberId);
+      setMembers((prev) => prev.filter((m) => m.id !== memberId));
+      setMemberSuccess('Member removed from the project.');
+    } catch (err) {
+      const error = err as { response?: { data?: { detail?: string } } };
+      setMemberError(error.response?.data?.detail || 'Failed to remove member');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   return (
     <div className="project-detail">
@@ -155,9 +248,79 @@ const ProjectDetail: React.FC = () => {
           </div>
         )}
         {activeTab === 'members' && (
-          <div>
+          <div className="members-section">
             <h3>Team Members</h3>
-            <p>Member list will go here.</p>
+
+            {memberError && <div className="error-message">{memberError}</div>}
+            {memberSuccess && <div className="success-message">{memberSuccess}</div>}
+
+            <ul className="members-list">
+              {members.map((member) => (
+                <li key={member.id} className="member-item">
+                  <div className="member-info">
+                    <span className="member-name">
+                      {member.user.full_name || member.user.username}
+                    </span>
+                    <span className="member-email">{member.user.email}</span>
+                  </div>
+                  <div className="member-meta">
+                    <span className={`member-role role-${member.role.toLowerCase()}`}>
+                      {ROLE_LABELS[member.role] || member.role}
+                    </span>
+                    {canManageMembers && member.role !== 'OWNER' && (
+                      <button
+                        type="button"
+                        className="btn-danger small"
+                        onClick={() => handleRemoveMember(member.id)}
+                        disabled={actionLoading}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </li>
+              ))}
+              {members.length === 0 && <li className="member-empty">No members yet.</li>}
+            </ul>
+
+            {canManageMembers && (
+              <form className="add-member-form" onSubmit={handleAddMember}>
+                <h4>Add Member</h4>
+                <div className="add-member-fields">
+                  <select
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value === '' ? '' : Number(e.target.value))}
+                    required
+                    disabled={actionLoading || availableUsers.length === 0}
+                  >
+                    <option value="">
+                      {availableUsers.length === 0 ? 'No users available' : 'Select a user'}
+                    </option>
+                    {availableUsers.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.full_name || u.username} ({u.email})
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value as MemberRole)}
+                    disabled={actionLoading}
+                  >
+                    <option value="MEMBER">Member</option>
+                    <option value="MANAGER">Manager</option>
+                    <option value="VIEWER">Viewer</option>
+                  </select>
+                  <button
+                    type="submit"
+                    className="action-btn"
+                    disabled={actionLoading || selectedUserId === ''}
+                  >
+                    {actionLoading ? 'Adding...' : 'Add User'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         )}
       </div>

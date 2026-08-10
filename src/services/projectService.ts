@@ -21,6 +21,7 @@ export interface Project {
   completed_tasks: number;
   comment_count: number;
   attachment_count: number;
+  members?: ProjectMember[];
   created_at: string;
   updated_at: string;
 }
@@ -89,7 +90,23 @@ export const projectService = {
   },
 
   async getProjectMembers(slug: string): Promise<ProjectMember[]> {
-    const response = await api.get<any>(`/projects/projects/${slug}/`);
+    const response = await api.get<Project>(`/projects/projects/${slug}/`);
     return response.data.members || [];
+  },
+
+  async addMember(
+    slug: string,
+    user_id: number,
+    role: ProjectMember['role'] = 'MEMBER'
+  ): Promise<ProjectMember> {
+    const response = await api.post<ProjectMember>(
+      `/projects/projects/${slug}/add_member/`,
+      { user_id, role }
+    );
+    return response.data;
+  },
+
+  async removeMember(slug: string, memberId: number): Promise<void> {
+    await api.delete(`/projects/projects/${slug}/remove_member/${memberId}/`);
   },
 };

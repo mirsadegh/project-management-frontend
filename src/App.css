@@ -588,6 +588,62 @@
   background: #d1d5db;
 }
 
+/* Create team / create list forms */
+.create-team-form,
+.create-list-form {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  max-width: 600px;
+}
+
+.create-team-form h3,
+.create-list-form h3 {
+  margin: 0 0 1rem;
+  color: #1f2937;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.add-list-btn {
+  align-self: flex-start;
+  white-space: nowrap;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content h3 {
+  margin: 0 0 1rem;
+  color: #1f2937;
+}
+
 /* Form Styles */
 .form-row {
   display: grid;
@@ -1080,6 +1136,7 @@
 
 .action-btn:hover {
   background: #535bf2;
+  color: #ffffff;
 }
 
 .action-btn.secondary {
@@ -1089,6 +1146,7 @@
 
 .action-btn.secondary:hover {
   background: #d1d5db;
+  color: #374151;
 }
 
 .action-btn.danger {
@@ -1097,6 +1155,7 @@
 
 .action-btn.danger:hover {
   background: #dc2626;
+  color: #ffffff;
 }
 
 .project-meta {
@@ -1677,4 +1736,120 @@
 .delete-actions {
   display: flex;
   gap: 0.75rem;
+}
+
+/* Project members section (ProjectDetail) */
+.members-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.member-email {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.member-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.member-meta .member-role {
+  margin-top: 0;
+}
+
+.member-role.role-owner {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.member-role.role-manager {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.member-role.role-member {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.member-role.role-viewer {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.member-empty {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.add-member-form {
+  padding: 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.add-member-form h4 {
+  margin: 0 0 0.75rem;
+  color: #1f2937;
+}
+
+.add-member-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.add-member-fields select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: #ffffff;
+  color: #1f2937;
+  min-width: 200px;
+}
+
+.add-member-fields select option {
+  color: #1f2937;
+  background: #ffffff;
+}
+
+.btn-danger.small {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  flex-shrink: 0;
 }
