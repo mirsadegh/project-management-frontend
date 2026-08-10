@@ -24,10 +24,9 @@ export const mockRegisterData = {
   username: 'newuser',
   email: 'new@example.com',
   password: 'NewPass123!',
-  password2: 'NewPass123!',
+  password_confirm: 'NewPass123!',
   first_name: 'New',
   last_name: 'User',
-  role: 'DEV',
 };
 
 export const mockProject = {

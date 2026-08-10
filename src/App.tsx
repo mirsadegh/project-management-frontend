@@ -1,7 +1,7 @@
 // src/App.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import type { ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './services/contexts/AuthContext';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -13,6 +13,8 @@ import TaskBoard from './components/TaskBoard';
 import TeamsList from './components/TeamsList';
 import TeamDetail from './components/TeamDetail';
 import NotificationsList from './components/NotificationsList';
+import EditProject from './components/EditProject';
+import ProjectSettings from './components/ProjectSettings';
 import './App.css';
 
 // Type for ProtectedRoute props
@@ -20,9 +22,22 @@ interface ProtectedRouteProps {
   children: ReactNode;
 }
 
-// ProtectedRoute - redirects to dashboard if not authenticated
+// ProtectedRoute - redirects to login if not authenticated
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
+  const navigate = useNavigate();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await logout();
+      navigate('/login', { replace: true });
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   if (loading) {
     return <div className="page-loading">Loading...</div>;
@@ -45,6 +60,14 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           <Link to="/profile" className="user-link">
             {user.full_name || user.username}
           </Link>
+          <button
+            type="button"
+            className="logout-button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+          >
+            {loggingOut ? 'Logging out...' : 'Logout'}
+          </button>
         </div>
       </nav>
       <main className="protected-content">{children}</main>
@@ -125,6 +148,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <TaskBoard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditProject />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:id/settings"
+            element={
+              <ProtectedRoute>
+                <ProjectSettings />
               </ProtectedRoute>
             }
           />

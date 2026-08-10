@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { projectService, type Project } from '../services/projectService';
+import { useAuth } from '../services/contexts/AuthContext';
 
 const ProjectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'files' | 'members'>('overview');
+
+  const canManage = user && (
+    user.role === 'ADMIN' ||
+    user.role === 'PM' ||
+    user.role === 'TL' ||
+    (project && (project.owner.id === user.id || (project.manager && project.manager.id === user.id)))
+  );
 
   useEffect(() => {
     if (id) {
@@ -20,8 +30,9 @@ const ProjectDetail: React.FC = () => {
       setLoading(true);
       const data = await projectService.getProject(projectSlug);
       setProject(data);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to load project');
+    } catch (err) {
+      const error = err as { response?: { data?: { detail?: string } } };
+      setError(error.response?.data?.detail || 'Failed to load project');
     } finally {
       setLoading(false);
     }
@@ -44,8 +55,22 @@ const ProjectDetail: React.FC = () => {
             <h1>{project.name}</h1>
           </div>
           <div className="project-actions">
-            <button className="action-btn">Edit</button>
-            <button className="action-btn secondary">Settings</button>
+            {canManage && (
+              <>
+                <button
+                  className="action-btn"
+                  onClick={() => navigate(`/projects/${project?.slug}/edit`)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="action-btn secondary"
+                  onClick={() => navigate(`/projects/${project?.slug}/settings`)}
+                >
+                  Settings
+                </button>
+              </>
+            )}
           </div>
         </div>
         

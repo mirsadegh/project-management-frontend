@@ -45,12 +45,28 @@ const Register: React.FC = () => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
+        password_confirm: formData.password_confirm,
         first_name: formData.first_name,
         last_name: formData.last_name,
       });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      const data = err.response?.data;
+      if (typeof data === 'string') {
+        setError(data);
+      } else if (data?.detail) {
+        setError(data.detail);
+      } else if (data && typeof data === 'object') {
+        // DRF field errors: { password: ["..."], email: ["..."] }
+        const messages = Object.entries(data)
+          .flatMap(([field, value]) => {
+            const list = Array.isArray(value) ? value : [value];
+            return list.map((msg) => `${field}: ${msg}`);
+          });
+        setError(messages.join(' ') || 'Registration failed. Please try again.');
+      } else {
+        setError('Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

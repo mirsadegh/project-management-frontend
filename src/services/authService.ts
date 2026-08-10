@@ -33,6 +33,7 @@ export interface UserProfile {
 export interface RegisterData {
   username: string;
   password: string;
+  password_confirm: string;
   email: string;
   first_name?: string;
   last_name?: string;
@@ -40,8 +41,17 @@ export interface RegisterData {
 
 export const authService = {
   async register(userData: RegisterData): Promise<void> {
-    // ما فقط یک پاسخ موفقیت‌آمیز را از سرور انتظار داریم، نیازی به بازگرداندن داده نیست
-    await api.post('/accounts/auth/register/', userData);
+    // Backend requires password_confirm and returns JWT tokens for auto-login
+    const response = await api.post<{
+      message: string;
+      tokens: AuthTokens;
+    }>('/accounts/auth/register/', userData);
+
+    const tokens = response.data?.tokens;
+    if (tokens?.access && tokens?.refresh) {
+      localStorage.setItem('accessToken', tokens.access);
+      localStorage.setItem('refreshToken', tokens.refresh);
+    }
   },
 
   async login(credentials: LoginCredentials): Promise<AuthTokens> {
@@ -55,9 +65,19 @@ export const authService = {
     return response.data;
   },
 
-  logout(): void {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+  async logout(): Promise<void> {
+    const refresh = localStorage.getItem('refreshToken');
+    try {
+      // Blacklist refresh token on the backend when available
+      if (refresh) {
+        await api.post('/accounts/auth/logout/', { refresh });
+      }
+    } catch {
+      // Always clear local session even if the API call fails
+    } finally {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+    }
   },
 
   async getCurrentUser(): Promise<UserProfile> {

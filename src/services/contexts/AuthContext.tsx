@@ -6,7 +6,7 @@ import { authService, UserProfile, LoginCredentials, RegisterData } from '../../
 interface AuthContextType {
   user: UserProfile | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   loading: boolean;
 }
@@ -48,14 +48,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUser(userData);
   };
 
-  const logout = () => {
-    authService.logout();
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
-    // نیازی به هدایت کاربر در اینجا نیست، کامپوننت ProtectedRoute این کار را می‌کند
+    // Navigation is handled by the UI (nav button / ProtectedRoute)
   };
 
   const register = async (userData: RegisterData) => {
     await authService.register(userData);
+    // Tokens are stored by authService; load profile for authenticated state
+    const userDataProfile = await authService.getCurrentUser();
+    setUser(userDataProfile);
   };
 
   const value: AuthContextType = {

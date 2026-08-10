@@ -51,13 +51,20 @@ describe('authService', () => {
   });
 
   describe('register', () => {
-    it('should call API with correct user data', async () => {
-      (api.post as jest.Mock).mockResolvedValue({});
+    it('should call API with correct user data and store tokens', async () => {
+      (api.post as jest.Mock).mockResolvedValue({
+        data: {
+          message: 'Registration successful',
+          tokens: mockAuthTokens,
+        },
+      });
       
       await authService.register(mockRegisterData);
       
       // Verify API was called with correct endpoint and data
       expect(api.post).toHaveBeenCalledWith('/accounts/auth/register/', mockRegisterData);
+      expect(localStorage.getItem('accessToken')).toBe(mockAuthTokens.access);
+      expect(localStorage.getItem('refreshToken')).toBe(mockAuthTokens.refresh);
     });
 
     it('should throw error when registration fails', async () => {
@@ -69,14 +76,27 @@ describe('authService', () => {
   });
 
   describe('logout', () => {
-    it('should remove tokens from localStorage', () => {
-      // Set up tokens first
+    it('should call backend logout and remove tokens from localStorage', async () => {
       localStorage.setItem('accessToken', mockAuthTokens.access);
       localStorage.setItem('refreshToken', mockAuthTokens.refresh);
+      (api.post as jest.Mock).mockResolvedValue({ data: { message: 'Successfully logged out' } });
       
-      authService.logout();
+      await authService.logout();
       
-      // Verify tokens are removed
+      expect(api.post).toHaveBeenCalledWith('/accounts/auth/logout/', {
+        refresh: mockAuthTokens.refresh,
+      });
+      expect(localStorage.getItem('accessToken')).toBeNull();
+      expect(localStorage.getItem('refreshToken')).toBeNull();
+    });
+
+    it('should still clear tokens if backend logout fails', async () => {
+      localStorage.setItem('accessToken', mockAuthTokens.access);
+      localStorage.setItem('refreshToken', mockAuthTokens.refresh);
+      (api.post as jest.Mock).mockRejectedValue(new Error('Network error'));
+      
+      await authService.logout();
+      
       expect(localStorage.getItem('accessToken')).toBeNull();
       expect(localStorage.getItem('refreshToken')).toBeNull();
     });

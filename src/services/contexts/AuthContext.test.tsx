@@ -155,12 +155,13 @@ describe('AuthContext', () => {
     it('should provide logout function', async () => {
       (authService.isAuthenticated as jest.Mock).mockReturnValue(true);
       (authService.getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+      (authService.logout as jest.Mock).mockResolvedValue(undefined);
       
       const TestComponent = () => {
         const { logout, user } = useAuth();
         return (
           <div>
-            <button onClick={logout}>Logout</button>
+            <button onClick={() => { void logout(); }}>Logout</button>
             <span data-testid="user">{user ? 'has-user' : 'no-user'}</span>
           </div>
         );
@@ -190,6 +191,7 @@ describe('AuthContext', () => {
     it('should provide register function', async () => {
       (authService.isAuthenticated as jest.Mock).mockReturnValue(false);
       (authService.register as jest.Mock).mockResolvedValue(undefined);
+      (authService.getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
       
       const TestComponent = () => {
         const { register } = useAuth();
@@ -199,6 +201,7 @@ describe('AuthContext', () => {
               username: 'newuser',
               email: 'new@example.com',
               password: 'password',
+              password_confirm: 'password',
             })}>
               Register
             </button>
@@ -221,6 +224,7 @@ describe('AuthContext', () => {
           username: 'newuser',
           email: 'new@example.com',
           password: 'password',
+          password_confirm: 'password',
         });
       });
     });
