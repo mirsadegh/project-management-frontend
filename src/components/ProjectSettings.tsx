@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { projectService, type Project } from '../services/projectService';
 import { useAuth } from '../services/contexts/AuthContext';
+import { formatDate } from '../utils/labels';
 
 const ProjectSettings: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,7 +35,7 @@ const ProjectSettings: React.FC = () => {
       setProject(data);
     } catch (err) {
       const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'Failed to load project');
+      setError(error.response?.data?.detail || 'بارگذاری پروژه ناموفق بود');
     } finally {
       setLoading(false);
     }
@@ -48,10 +49,10 @@ const ProjectSettings: React.FC = () => {
     try {
       await projectService.updateProject(id, { is_public: !project.is_public });
       setProject((prev) => prev ? { ...prev, is_public: !prev.is_public } : null);
-      setSuccess(`Project is now ${!project.is_public ? 'public' : 'private'}`);
+      setSuccess(`پروژه اکنون ${!project.is_public ? 'عمومی' : 'خصوصی'} است`);
     } catch (err) {
       const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'Failed to update visibility');
+      setError(error.response?.data?.detail || 'به‌روزرسانی دید ناموفق بود');
     } finally {
       setSaving(false);
     }
@@ -74,17 +75,17 @@ const ProjectSettings: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="page-loading">Loading settings...</div>;
+    return <div className="page-loading">در حال بارگذاری تنظیمات...</div>;
   }
 
   if (!project) {
-    return <div className="error-message">{error || 'Project not found'}</div>;
+    return <div className="error-message">{error || 'پروژه یافت نشد'}</div>;
   }
 
   if (!canManage) {
     return (
       <div className="error-message">
-        You do not have permission to manage project settings.
+        شما دسترسی لازم برای مدیریت تنظیمات پروژه را ندارید.
       </div>
     );
   }
@@ -94,10 +95,10 @@ const ProjectSettings: React.FC = () => {
       <div className="page-header">
         <div className="header-left">
           <Link to={`/projects/${id}`} className="back-btn">
-            ← Back to Project
+            → بازگشت به پروژه
           </Link>
-          <h1>Project Settings</h1>
-          <p className="page-subtitle">Manage project visibility and data</p>
+          <h1>تنظیمات پروژه</h1>
+          <p className="page-subtitle">مدیریت دید پروژه و داده‌ها</p>
         </div>
       </div>
 
@@ -106,19 +107,19 @@ const ProjectSettings: React.FC = () => {
         {success && <div className="success-message">{success}</div>}
 
         <div className="settings-section">
-          <h3>Visibility</h3>
+          <h3>دید</h3>
           <div className="setting-item">
             <div>
               <strong>
-                Public Project{' '}
+                پروژه عمومی{' '}
                 <span className={`visibility-badge ${project.is_public ? 'public' : 'private'}`}>
-                  {project.is_public ? 'Public' : 'Private'}
+                  {project.is_public ? 'عمومی' : 'خصوصی'}
                 </span>
               </strong>
               <p>
                 {project.is_public
-                  ? 'This project is visible to all users.'
-                  : 'This project is only visible to project members.'}
+                  ? 'این پروژه برای همه کاربران قابل مشاهده است.'
+                  : 'این پروژه فقط برای اعضای پروژه قابل مشاهده است.'}
               </p>
             </div>
             <button
@@ -128,79 +129,79 @@ const ProjectSettings: React.FC = () => {
               disabled={saving}
               aria-pressed={project.is_public}
             >
-              {saving ? 'Saving...' : project.is_public ? 'Make Private' : 'Make Public'}
+              {saving ? 'در حال ذخیره...' : project.is_public ? 'خصوصی کردن' : 'عمومی کردن'}
             </button>
           </div>
         </div>
 
         <div className="settings-section">
-          <h3>Project Information</h3>
+          <h3>اطلاعات پروژه</h3>
           <div className="info-grid">
             <div className="info-item">
-              <span className="info-label">Owner</span>
+              <span className="info-label">مالک</span>
               <span className="info-value">{project.owner.full_name || project.owner.username}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">Manager</span>
+              <span className="info-label">مدیر</span>
               <span className="info-value">
-                {project.manager ? (project.manager.full_name || project.manager.username) : 'Not assigned'}
+                {project.manager ? (project.manager.full_name || project.manager.username) : 'تعیین نشده'}
               </span>
             </div>
             <div className="info-item">
-              <span className="info-label">Created</span>
+              <span className="info-label">ایجاد شده</span>
               <span className="info-value">
-                {new Date(project.created_at).toLocaleDateString()}
+                {formatDate(project.created_at)}
               </span>
             </div>
             <div className="info-item">
-              <span className="info-label">Last Updated</span>
+              <span className="info-label">آخرین به‌روزرسانی</span>
               <span className="info-value">
-                {new Date(project.updated_at).toLocaleDateString()}
+                {formatDate(project.updated_at)}
               </span>
             </div>
             <div className="info-item">
-              <span className="info-label">Total Tasks</span>
+              <span className="info-label">مجموع وظایف</span>
               <span className="info-value">{project.total_tasks}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">Members</span>
+              <span className="info-label">اعضا</span>
               <span className="info-value">{project.comment_count}</span>
             </div>
           </div>
         </div>
 
         <div className="settings-section danger-zone">
-          <h3>Danger Zone</h3>
+          <h3>منطقه خطر</h3>
           {!showDeleteConfirm ? (
             <div className="setting-item">
               <div>
-                <strong>Delete this project</strong>
-                <p>Once deleted, there is no going back. Please be certain.</p>
+                <strong>حذف این پروژه</strong>
+                <p>پس از حذف، امکان بازگشت وجود ندارد. لطفاً مطمئن باشید.</p>
               </div>
               <button
                 className="btn-danger"
                 onClick={() => setShowDeleteConfirm(true)}
               >
-                Delete Project
+                حذف پروژه
               </button>
             </div>
           ) : (
             <div className="delete-confirm">
-              <p>Are you sure you want to delete <strong>{project.name}</strong>? This action cannot be undone.</p>
+              <p>آیا مطمئن هستید که می‌خواهید <strong>{project.name}</strong> را حذف کنید؟ این عمل غیرقابل بازگشت است.</p>
               <div className="delete-actions">
                 <button
                   className="btn-secondary"
                   onClick={() => setShowDeleteConfirm(false)}
                   disabled={deleting}
                 >
-                  Cancel
+                  انصراف
                 </button>
                 <button
                   className="btn-danger"
                   onClick={handleDelete}
                   disabled={deleting}
                 >
-                  {deleting ? 'Deleting...' : 'Yes, Delete Project'}
+                  {deleting ? 'در حال حذف...' : 'بله، پروژه را حذف کن'}
                 </button>
               </div>
             </div>

@@ -17,12 +17,12 @@ function getLoginErrorMessage(err: unknown): string {
         typeof data === 'object' && data && 'detail' in data ? data.detail : undefined;
       return (
         detail ||
-        'Too many login attempts. Please wait a few minutes and try again.'
+        'تعداد تلاش‌های ورود بیش از حد مجاز است. لطفاً چند دقیقه صبر کنید و دوباره تلاش کنید.'
       );
     }
 
     if (!err.response) {
-      return 'Cannot reach the server. Make sure the backend is running on port 8000.';
+      return 'ارتباط با سرور برقرار نشد. مطمئن شوید بک‌اند روی پورت ۸۰۰۰ در حال اجراست.';
     }
 
     if (status === 401 || status === 400) {
@@ -32,21 +32,21 @@ function getLoginErrorMessage(err: unknown): string {
           return data.non_field_errors[0];
         }
       }
-      return 'Invalid email or password';
+      return 'ایمیل یا رمز عبور نادرست است';
     }
 
     if (typeof data === 'object' && data && typeof data.detail === 'string') {
       return data.detail;
     }
 
-    return `Login failed (error ${status}). Please try again.`;
+    return `ورود ناموفق بود (خطای ${status}). لطفاً دوباره تلاش کنید.`;
   }
 
   if (err instanceof Error && err.message) {
     return err.message;
   }
 
-  return 'Login failed. Please try again.';
+  return 'ورود ناموفق بود. لطفاً دوباره تلاش کنید.';
 }
 
 const Login = () => {
@@ -74,30 +74,30 @@ const Login = () => {
 
   return (
     <div className="login-container">
-      <h2>Welcome Back</h2>
-      <p className="login-subtitle">Sign in to your account</p>
+      <h2>خوش آمدید</h2>
+      <p className="login-subtitle">وارد حساب کاربری خود شوید</p>
       {error && <div className="error">{error}</div>}
       <form onSubmit={handleSubmit}>
         <input
           type="email"
-          placeholder="Email"
+          placeholder="ایمیل"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <input
           type="password"
-          placeholder="Password"
+          placeholder="رمز عبور"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
         <button type="submit" disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? 'در حال ورود...' : 'ورود'}
         </button>
       </form>
       <p className="login-footer">
-        Don't have an account? <Link to="/register">Create one</Link>
+        حساب کاربری ندارید؟ <Link to="/register">ثبت‌نام کنید</Link>
       </p>
     </div>
   );

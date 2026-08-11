@@ -32,7 +32,7 @@ const TeamsList: React.FC = () => {
       const data = await teamService.getTeams();
       setTeams(data);
     } catch (err) {
-      setError(getErrorMessage(err, 'Failed to load teams'));
+      setError(getErrorMessage(err, 'بارگذاری تیم‌ها ناموفق بود'));
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,7 @@ const TeamsList: React.FC = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) {
-      setFormError('Team name is required');
+      setFormError('نام تیم الزامی است');
       return;
     }
 
@@ -58,7 +58,7 @@ const TeamsList: React.FC = () => {
       setShowCreate(false);
       await loadTeams();
     } catch (err) {
-      setFormError(getErrorMessage(err, 'Failed to create team'));
+      setFormError(getErrorMessage(err, 'ایجاد تیم ناموفق بود'));
     } finally {
       setCreating(false);
     }
@@ -70,25 +70,25 @@ const TeamsList: React.FC = () => {
   );
 
   if (loading) {
-    return <div className="page-loading">Loading teams...</div>;
+    return <div className="page-loading">در حال بارگذاری تیم‌ها...</div>;
   }
 
   return (
     <div className="teams-page">
       <div className="page-header">
         <div className="header-left">
-          <h1>Teams</h1>
-          <p className="page-subtitle">Collaborate with your team members</p>
+          <h1>تیم‌ها</h1>
+          <p className="page-subtitle">با اعضای تیم خود همکاری کنید</p>
         </div>
         <div className="header-actions">
           <input
             type="text"
-            placeholder="Search teams..."
+            placeholder="جستجوی تیم‌ها..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="search-input"
           />
-          <button className="btn-primary" onClick={openCreate}>+ New Team</button>
+          <button className="btn-primary" onClick={openCreate}>+ تیم جدید</button>
         </div>
       </div>
 
@@ -96,33 +96,33 @@ const TeamsList: React.FC = () => {
 
       {showCreate && (
         <form className="create-team-form" onSubmit={handleCreate}>
-          <h3>Create New Team</h3>
+          <h3>ایجاد تیم جدید</h3>
           {formError && <div className="error-message">{formError}</div>}
           <div className="form-group">
-            <label>Team Name</label>
+            <label>نام تیم</label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. Frontend Squad"
+              placeholder="مثلاً: تیم فرانت‌اند"
               disabled={creating}
             />
           </div>
           <div className="form-group">
-            <label>Description</label>
+            <label>توضیحات</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="What is this team about?"
+              placeholder="این تیم درباره چیست؟"
               disabled={creating}
             />
           </div>
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={() => setShowCreate(false)} disabled={creating}>
-              Cancel
+              انصراف
             </button>
             <button type="submit" className="btn-primary" disabled={creating}>
-              {creating ? 'Creating...' : 'Create Team'}
+              {creating ? 'در حال ایجاد...' : 'ایجاد تیم'}
             </button>
           </div>
         </form>
@@ -131,20 +131,20 @@ const TeamsList: React.FC = () => {
       {!showCreate && filteredTeams.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">👥</div>
-          <h3>No teams yet</h3>
-          <p>Create your first team to start collaborating</p>
-          <button className="btn-primary" onClick={openCreate}>Create Team</button>
+          <h3>هنوز تیمی وجود ندارد</h3>
+          <p>اولین تیم خود را بسازید تا همکاری را شروع کنید</p>
+          <button className="btn-primary" onClick={openCreate}>ایجاد تیم</button>
         </div>
       ) : (
         <div className="teams-grid">
           {filteredTeams.map((team) => (
             <Link to={`/teams/${team.slug}`} key={team.id} className="team-card">
               <h3>{team.name}</h3>
-              <p>{team.description || 'No description provided'}</p>
+              <p>{team.description || 'توضیحی ثبت نشده است'}</p>
               <div className="team-members-preview">
-                <div className="member-avatar">T</div>
+                <div className="member-avatar">ت</div>
                 <span className="member-count">
-                  {team.member_count !== undefined ? `${team.member_count} members` : 'View team'}
+                  {team.member_count !== undefined ? `${team.member_count} عضو` : 'مشاهده تیم'}
                 </span>
               </div>
             </Link>

@@ -40,7 +40,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   };
 
   if (loading) {
-    return <div className="page-loading">Loading...</div>;
+    return <div className="page-loading">در حال بارگذاری...</div>;
   }
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -49,12 +49,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   return (
     <div className="protected-layout">
       <nav className="protected-nav">
-        <div className="nav-brand">Project Management</div>
+        <div className="nav-brand">مدیریت پروژه</div>
         <div className="nav-links">
-          <Link to="/dashboard" className="nav-link">Dashboard</Link>
-          <Link to="/projects" className="nav-link">Projects</Link>
-          <Link to="/teams" className="nav-link">Teams</Link>
-          <Link to="/notifications" className="nav-link">Notifications</Link>
+          <Link to="/dashboard" className="nav-link">داشبورد</Link>
+          <Link to="/projects" className="nav-link">پروژه‌ها</Link>
+          <Link to="/teams" className="nav-link">تیم‌ها</Link>
+          <Link to="/notifications" className="nav-link">اعلان‌ها</Link>
         </div>
         <div className="nav-user">
           <Link to="/profile" className="user-link">
@@ -66,7 +66,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             onClick={handleLogout}
             disabled={loggingOut}
           >
-            {loggingOut ? 'Logging out...' : 'Logout'}
+            {loggingOut ? 'در حال خروج...' : 'خروج'}
           </button>
         </div>
       </nav>
@@ -80,7 +80,7 @@ const GuestRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="page-loading">Loading...</div>;
+    return <div className="page-loading">در حال بارگذاری...</div>;
   }
   if (user) {
     return <Navigate to="/dashboard" replace />;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FileText, Download, Eye, Trash2 } from 'lucide-react';
 // 1. سرویس api خود را وارد کنید
 import api from '../services/api';
+import { formatDate } from '../utils/labels';
 
 // 2. تعریف تایپ‌ها برای داده‌ها
 interface UploadedBy {
@@ -74,7 +75,7 @@ const FileList: React.FC<FileListProps> = ({ contentType, objectId }) => {
       window.URL.revokeObjectURL(url); // پاکسازی حافظه
     } catch (error) {
       console.error('Error downloading file:', error);
-      alert('Failed to download file');
+      alert('دانلود فایل ناموفق بود');
     }
   };
 
@@ -88,7 +89,7 @@ const FileList: React.FC<FileListProps> = ({ contentType, objectId }) => {
   };
 
   const handleDelete = async (fileId: number): Promise<void> => {
-    if (!window.confirm('Are you sure you want to delete this file?')) {
+    if (!window.confirm('آیا مطمئن هستید که می‌خواهید این فایل را حذف کنید؟')) {
       return;
     }
 
@@ -98,7 +99,7 @@ const FileList: React.FC<FileListProps> = ({ contentType, objectId }) => {
       
       // به‌روزرسانی لیست پس از حذف موفق
       fetchFiles();
-      alert('File deleted successfully');
+      alert('فایل با موفقیت حذف شد');
     } catch (error) {
       console.error('Error deleting file:', error);
       alert('Failed to delete file');
@@ -112,16 +113,16 @@ const FileList: React.FC<FileListProps> = ({ contentType, objectId }) => {
   };
 
   if (loading) {
-    return <div>Loading files...</div>;
+    return <div>در حال بارگذاری فایل‌ها...</div>;
   }
 
   if (files.length === 0) {
-    return <div>No files attached</div>;
+    return <div>فایلی پیوست نشده است</div>;
   }
 
   return (
     <div className="file-list">
-      <h3>Attachments ({files.length})</h3>
+      <h3>پیوست‌ها ({files.length})</h3>
       
       <div className="files">
         {files.map((file) => (
@@ -145,7 +146,7 @@ const FileList: React.FC<FileListProps> = ({ contentType, objectId }) => {
                 <span>•</span>
                 <span>{file.uploaded_by.username}</span>
                 <span>•</span>
-                <span>{new Date(file.uploaded_at).toLocaleDateString()}</span>
+                <span>{formatDate(file.uploaded_at)}</span>
               </div>
               {file.description && (
                 <div className="file-description">{file.description}</div>
@@ -155,7 +156,7 @@ const FileList: React.FC<FileListProps> = ({ contentType, objectId }) => {
             <div className="file-actions">
               <button
                 onClick={() => handleDownload(file.id, file.original_filename)}
-                title="Download"
+                title="دانلود"
               >
                 <Download size={20} />
               </button>
@@ -163,7 +164,7 @@ const FileList: React.FC<FileListProps> = ({ contentType, objectId }) => {
               {(file.is_image || file.file_type === 'application/pdf') && (
                 <button
                   onClick={() => handlePreview(file.id)}
-                  title="Preview"
+                  title="پیش‌نمایش"
                 >
                   <Eye size={20} />
                 </button>
@@ -171,7 +172,7 @@ const FileList: React.FC<FileListProps> = ({ contentType, objectId }) => {
               
               <button
                 onClick={() => handleDelete(file.id)}
-                title="Delete"
+                title="حذف"
                 className="delete-btn"
               >
                 <Trash2 size={20} />

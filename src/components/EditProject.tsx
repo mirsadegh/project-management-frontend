@@ -51,7 +51,7 @@ const EditProject: React.FC = () => {
       });
     } catch (err) {
       const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'Failed to load project');
+      setError(error.response?.data?.detail || 'بارگذاری پروژه ناموفق بود');
     } finally {
       setLoading(false);
     }
@@ -84,26 +84,26 @@ const EditProject: React.FC = () => {
       };
 
       await projectService.updateProject(id, projectData);
-      setSuccess('Project updated successfully');
+      setSuccess('پروژه با موفقیت به‌روزرسانی شد');
       setTimeout(() => {
         navigate(`/projects/${id}`);
       }, 800);
     } catch (err) {
       const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'Failed to update project');
+      setError(error.response?.data?.detail || 'به‌روزرسانی پروژه ناموفق بود');
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return <div className="page-loading">Loading project...</div>;
+    return <div className="page-loading">در حال بارگذاری پروژه...</div>;
   }
 
   if (!canEdit) {
     return (
       <div className="error-message">
-        You do not have permission to edit this project.
+        شما دسترسی لازم برای ویرایش این پروژه را ندارید.
       </div>
     );
   }
@@ -113,10 +113,10 @@ const EditProject: React.FC = () => {
       <div className="page-header">
         <div className="header-left">
           <Link to={`/projects/${id}`} className="back-btn">
-            ← Back to Project
+            → بازگشت به پروژه
           </Link>
-          <h1>Edit Project</h1>
-          <p className="page-subtitle">Update project details and settings</p>
+          <h1>ویرایش پروژه</h1>
+          <p className="page-subtitle">به‌روزرسانی جزئیات و تنظیمات پروژه</p>
         </div>
       </div>
 
@@ -126,67 +126,67 @@ const EditProject: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="create-project-form">
           <div className="form-section">
-            <h3>Basic Information</h3>
+            <h3>اطلاعات پایه</h3>
 
             <div className="form-group">
-              <label htmlFor="name">Project Name *</label>
+              <label htmlFor="name">نام پروژه *</label>
               <input
                 type="text"
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Enter project name"
+                placeholder="نام پروژه را وارد کنید"
                 required
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="description">Description</label>
+              <label htmlFor="description">توضیحات</label>
               <textarea
                 id="description"
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="Describe your project..."
+                placeholder="پروژه خود را توصیف کنید..."
                 rows={4}
               />
             </div>
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="priority">Priority</label>
+                <label htmlFor="priority">اولویت</label>
                 <select
                   id="priority"
                   name="priority"
                   value={formData.priority}
                   onChange={handleChange}
                 >
-                  <option value="LOW">Low</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HIGH">High</option>
-                  <option value="CRITICAL">Critical</option>
+                  <option value="LOW">کم</option>
+                  <option value="MEDIUM">متوسط</option>
+                  <option value="HIGH">بالا</option>
+                  <option value="CRITICAL">بحرانی</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label htmlFor="status">Status</label>
+                <label htmlFor="status">وضعیت</label>
                 <select
                   id="status"
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
                 >
-                  <option value="PLANNING">Planning</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="ON_HOLD">On Hold</option>
-                  <option value="COMPLETED">Completed</option>
-                  <option value="CANCELLED">Cancelled</option>
+                  <option value="PLANNING">برنامه‌ریزی</option>
+                  <option value="IN_PROGRESS">در حال انجام</option>
+                  <option value="ON_HOLD">متوقف</option>
+                  <option value="COMPLETED">تکمیل‌شده</option>
+                  <option value="CANCELLED">لغوشده</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label htmlFor="budget">Budget (Optional)</label>
+                <label htmlFor="budget">بودجه (اختیاری)</label>
                 <input
                   type="number"
                   id="budget"
@@ -208,18 +208,18 @@ const EditProject: React.FC = () => {
                   checked={formData.is_public}
                   onChange={handleChange}
                 />
-                Make this project public
+                این پروژه عمومی باشد
               </label>
-              <small className="form-help">Public projects can be viewed by all users</small>
+              <small className="form-help">پروژه‌های عمومی برای همه کاربران قابل مشاهده است</small>
             </div>
           </div>
 
           <div className="form-section">
-            <h3>Timeline</h3>
+            <h3>زمان‌بندی</h3>
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="start_date">Start Date</label>
+                <label htmlFor="start_date">تاریخ شروع</label>
                 <input
                   type="date"
                   id="start_date"
@@ -230,7 +230,7 @@ const EditProject: React.FC = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="due_date">Due Date</label>
+                <label htmlFor="due_date">مهلت</label>
                 <input
                   type="date"
                   id="due_date"
@@ -248,14 +248,14 @@ const EditProject: React.FC = () => {
               className="btn-secondary"
               onClick={() => navigate(`/projects/${id}`)}
             >
-              Cancel
+              انصراف
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={saving}
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
             </button>
           </div>
         </form>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 // 1. سرویس api خود را وارد کنید
 import api from '../services/api';
+import { formatDateTime } from '../utils/labels';
 
 // 2. تعریف تایپ‌ها برای داده‌ها
 interface Author {
@@ -80,7 +81,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ contentType, objectId }
       fetchComments(); // Refresh comments
     } catch (error) {
       console.error('Error posting comment:', error);
-      alert('Failed to post comment');
+      alert('ارسال نظر ناموفق بود');
     } finally {
       setSubmitting(false);
     }
@@ -97,24 +98,24 @@ const CommentSection: React.FC<CommentSectionProps> = ({ contentType, objectId }
   };
 
   if (loading) {
-    return <div>Loading comments...</div>;
+    return <div>در حال بارگذاری نظرات...</div>;
   }
 
   return (
     <div className="comment-section">
-      <h3>Comments ({comments.length})</h3>
+      <h3>نظرات ({comments.length})</h3>
 
       {/* Comment Form */}
       <form onSubmit={handleSubmit} className="comment-form">
         <textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Write a comment... (Use @username to mention someone)"
+          placeholder="نظر خود را بنویسید... (برای اشاره به کسی از @username استفاده کنید)"
           rows={3} // بهتر است به صورت عددی داده شود
           disabled={submitting}
         />
         <button type="submit" disabled={submitting || !newComment.trim()}>
-          {submitting ? 'Posting...' : 'Post Comment'}
+          {submitting ? 'در حال ارسال...' : 'ارسال نظر'}
         </button>
       </form>
 
@@ -125,9 +126,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({ contentType, objectId }
             <div className="comment-header">
               <strong>{comment.author.username}</strong>
               <span className="comment-date">
-                {new Date(comment.created_at).toLocaleString()}
+                {formatDateTime(comment.created_at)}
               </span>
-              {comment.is_edited && <span className="edited">(edited)</span>}
+              {comment.is_edited && <span className="edited">(ویرایش‌شده)</span>}
             </div>
             
             <div className="comment-text">{comment.text}</div>
@@ -139,7 +140,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ contentType, objectId }
               <button onClick={() => handleReact(comment.id, 'LOVE')}>
                 ❤️ {comment.reactions?.filter(r => r.reaction_type === 'LOVE').length || 0}
               </button>
-              <button>Reply</button>
+              <button>پاسخ</button>
             </div>
 
             {/* Replies */}

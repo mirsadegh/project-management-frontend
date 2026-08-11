@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { taskService, type Task, type TaskList } from '../services/taskService';
 import { projectService, type Project } from '../services/projectService';
 import { authService } from '../services/authService';
+import { getPriorityLabel, getTaskStatusLabel, formatDate } from '../utils/labels';
 
 type ApiError = {
   response?: { data?: { detail?: string; name?: string[]; title?: string[] } };
@@ -58,7 +59,7 @@ const TaskBoard: React.FC = () => {
       const taskListsData = await taskService.getTaskLists(projectData.id);
       setTaskLists(taskListsData);
     } catch (err) {
-      setError(getErrorMessage(err, 'Failed to load project or tasks'));
+      setError(getErrorMessage(err, 'بارگذاری پروژه یا وظایف ناموفق بود'));
     } finally {
       setLoading(false);
     }
@@ -84,7 +85,7 @@ const TaskBoard: React.FC = () => {
   const handleCreateList = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!project || !listName.trim()) {
-      setListError('List name is required');
+      setListError('نام لیست الزامی است');
       return;
     }
 
@@ -95,7 +96,7 @@ const TaskBoard: React.FC = () => {
       setShowListForm(false);
       await loadProjectAndTasks(projectId!);
     } catch (err) {
-      setListError(getErrorMessage(err, 'Failed to create task list'));
+      setListError(getErrorMessage(err, 'ایجاد لیست وظایف ناموفق بود'));
     } finally {
       setCreatingList(false);
     }
@@ -103,7 +104,7 @@ const TaskBoard: React.FC = () => {
 
   const openTaskModal = async (presetListId?: number) => {
     if (taskLists.length === 0) {
-      setTaskError('Create a task list first');
+      setTaskError('ابتدا یک لیست وظایف بسازید');
       return;
     }
     setTaskError(null);
@@ -128,11 +129,11 @@ const TaskBoard: React.FC = () => {
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!project || !taskForm.title.trim()) {
-      setTaskError('Task title is required');
+      setTaskError('عنوان وظیفه الزامی است');
       return;
     }
     if (taskForm.task_list === '') {
-      setTaskError('Please select a task list');
+      setTaskError('لطفاً یک لیست وظایف انتخاب کنید');
       return;
     }
 
@@ -152,14 +153,14 @@ const TaskBoard: React.FC = () => {
       setShowTaskModal(false);
       await loadProjectAndTasks(projectId!);
     } catch (err) {
-      setTaskError(getErrorMessage(err, 'Failed to create task'));
+      setTaskError(getErrorMessage(err, 'ایجاد وظیفه ناموفق بود'));
     } finally {
       setCreatingTask(false);
     }
   };
 
   if (loading) {
-    return <div className="page-loading">Loading task board...</div>;
+    return <div className="page-loading">در حال بارگذاری بورد وظایف...</div>;
   }
 
   if (error) {
@@ -170,11 +171,11 @@ const TaskBoard: React.FC = () => {
     <div className="task-board-page">
       <div className="page-header">
         <div className="header-left">
-          <Link to={`/projects/${projectId}`} className="back-link">← Back to Project</Link>
-          <h1>Task Board</h1>
+          <Link to={`/projects/${projectId}`} className="back-link">→ بازگشت به پروژه</Link>
+          <h1>بورد وظایف</h1>
         </div>
         <div className="header-actions">
-          <button className="btn-primary" onClick={() => openTaskModal()}> + Add Task</button>
+          <button className="btn-primary" onClick={() => openTaskModal()}> + افزودن وظیفه</button>
         </div>
       </div>
 
@@ -182,17 +183,17 @@ const TaskBoard: React.FC = () => {
         <form className="create-list-form" onSubmit={handleCreateList}>
           {listError && <div className="error-message">{listError}</div>}
           <div className="form-group">
-            <label>List Name</label>
+            <label>نام لیست</label>
             <input
               type="text"
               value={listName}
               onChange={(e) => setListName(e.target.value)}
-              placeholder="e.g. To Do"
+              placeholder="مثلاً: انجام‌نشده"
               disabled={creatingList}
             />
           </div>
           <div className="form-group">
-            <label>Description (optional)</label>
+            <label>توضیحات (اختیاری)</label>
             <input
               type="text"
               value={listDesc}
@@ -202,10 +203,10 @@ const TaskBoard: React.FC = () => {
           </div>
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={() => setShowListForm(false)} disabled={creatingList}>
-              Cancel
+              انصراف
             </button>
             <button type="submit" className="btn-primary" disabled={creatingList}>
-              {creatingList ? 'Creating...' : 'Create List'}
+              {creatingList ? 'در حال ایجاد...' : 'ایجاد لیست'}
             </button>
           </div>
         </form>
@@ -214,9 +215,9 @@ const TaskBoard: React.FC = () => {
       {taskLists.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📋</div>
-          <h3>No task lists yet</h3>
-          <p>Create your first task list to start organizing tasks</p>
-          <button className="btn-primary" onClick={openListForm}>+ Add Task List</button>
+          <h3>هنوز لیست وظایفی وجود ندارد</h3>
+          <p>اولین لیست وظایف را بسازید تا کارها را سازمان‌دهی کنید</p>
+          <button className="btn-primary" onClick={openListForm}>+ افزودن لیست وظایف</button>
         </div>
       ) : (
         <div className="task-board">
@@ -235,7 +236,7 @@ const TaskBoard: React.FC = () => {
                         className="task-priority"
                         style={{ backgroundColor: getPriorityColor(task.priority) }}
                       >
-                        {task.priority}
+                        {getPriorityLabel(task.priority)}
                       </span>
                     </div>
                     <div className="task-card-footer">
@@ -247,33 +248,33 @@ const TaskBoard: React.FC = () => {
                             </div>
                           </>
                         ) : (
-                          <span className="unassigned">Unassigned</span>
+                          <span className="unassigned">بدون مسئول</span>
                         )}
                       </div>
                       {task.due_date && (
                         <span className={`task-due-date ${task.is_overdue ? 'overdue' : ''}`}>
-                          {new Date(task.due_date).toLocaleDateString()}
+                          {formatDate(task.due_date)}
                         </span>
                       )}
                     </div>
                   </div>
                 ))}
-                <button className="add-task-btn" onClick={() => openTaskModal(list.id)}>+ Add Task</button>
+                <button className="add-task-btn" onClick={() => openTaskModal(list.id)}>+ افزودن وظیفه</button>
               </div>
             </div>
           ))}
-          <button className="btn-primary add-list-btn" onClick={openListForm}>+ Add Task List</button>
+          <button className="btn-primary add-list-btn" onClick={openListForm}>+ افزودن لیست</button>
         </div>
       )}
 
       {showTaskModal && (
         <div className="modal-overlay" onClick={() => setShowTaskModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Add Task</h3>
+            <h3>افزودن وظیفه</h3>
             {taskError && <div className="error-message">{taskError}</div>}
             <form onSubmit={handleCreateTask}>
               <div className="form-group">
-                <label>Task List</label>
+                <label>لیست وظایف</label>
                 <select
                   value={taskForm.task_list}
                   onChange={(e) => setTaskForm({ ...taskForm, task_list: e.target.value === '' ? '' : Number(e.target.value) })}
@@ -286,18 +287,18 @@ const TaskBoard: React.FC = () => {
                 </select>
               </div>
               <div className="form-group">
-                <label>Title</label>
+                <label>عنوان</label>
                 <input
                   type="text"
                   value={taskForm.title}
                   onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-                  placeholder="Task title"
+                  placeholder="عنوان وظیفه"
                   disabled={creatingTask}
                   required
                 />
               </div>
               <div className="form-group">
-                <label>Description</label>
+                <label>توضیحات</label>
                 <textarea
                   value={taskForm.description}
                   onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
@@ -306,33 +307,33 @@ const TaskBoard: React.FC = () => {
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Priority</label>
+                  <label>اولویت</label>
                   <select
                     value={taskForm.priority}
                     onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as Task['priority'] })}
                     disabled={creatingTask}
                   >
                     {PRIORITIES.map((p) => (
-                      <option key={p} value={p}>{p}</option>
+                      <option key={p} value={p}>{getPriorityLabel(p)}</option>
                     ))}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Status</label>
+                  <label>وضعیت</label>
                   <select
                     value={taskForm.status}
                     onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value as Task['status'] })}
                     disabled={creatingTask}
                   >
                     {STATUSES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
+                      <option key={s} value={s}>{getTaskStatusLabel(s)}</option>
                     ))}
                   </select>
                 </div>
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Due Date</label>
+                  <label>مهلت</label>
                   <input
                     type="date"
                     value={taskForm.due_date}
@@ -341,13 +342,13 @@ const TaskBoard: React.FC = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Assignee (optional)</label>
+                  <label>مسئول (اختیاری)</label>
                   <select
                     value={taskForm.assignee_id}
                     onChange={(e) => setTaskForm({ ...taskForm, assignee_id: e.target.value === '' ? '' : Number(e.target.value) })}
                     disabled={creatingTask}
                   >
-                    <option value="">Unassigned</option>
+                    <option value="">بدون مسئول</option>
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>{u.full_name || u.username}</option>
                     ))}
@@ -356,10 +357,10 @@ const TaskBoard: React.FC = () => {
               </div>
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => setShowTaskModal(false)} disabled={creatingTask}>
-                  Cancel
+                  انصراف
                 </button>
                 <button type="submit" className="btn-primary" disabled={creatingTask}>
-                  {creatingTask ? 'Creating...' : 'Create Task'}
+                  {creatingTask ? 'در حال ایجاد...' : 'ایجاد وظیفه'}
                 </button>
               </div>
             </form>

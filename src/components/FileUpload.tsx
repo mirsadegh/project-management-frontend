@@ -32,7 +32,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ contentType, objectId, onUpload
     
     // Validate file size (10MB)
     if (selectedFile && selectedFile.size > 10 * 1024 * 1024) {
-      setError('File size cannot exceed 10MB');
+      setError('حجم فایل نباید بیشتر از ۱۰ مگابایت باشد');
       return;
     }
     
@@ -42,7 +42,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ contentType, objectId, onUpload
 
   const handleUpload = async (): Promise<void> => {
     if (!file) {
-      setError('Please select a file');
+      setError('لطفاً یک فایل انتخاب کنید');
       return;
     }
 
@@ -81,7 +81,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ contentType, objectId, onUpload
         onUploadComplete(response.data);
       }
       
-      alert('File uploaded successfully!');
+      alert('فایل با موفقیت آپلود شد!');
       
     } catch (err: any) {
       // تایپ err به صورت any یا unknown و سپس بررسی آن
@@ -93,50 +93,50 @@ const FileUpload: React.FC<FileUploadProps> = ({ contentType, objectId, onUpload
   };
 
   return (
-    <div className="file-upload">
-      <h3>Upload File</h3>
-      
-      <div className="form-group">
-        <input
-          type="file"
-          onChange={handleFileChange}
-          disabled={uploading}
-          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.zip"
-        />
-      </div>
-
-      <div className="form-group">
-        <input
-          type="text"
-          placeholder="File description (optional)"
-          value={description}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)}
-          disabled={uploading}
-        />
-      </div>
-
-      {uploading && (
-        <div className="progress-bar">
-          <div
-            className="progress-fill"
-            style={{ width: `${progress}%` }}
-          >
-            {progress}%
-          </div>
+      <div className="file-upload">
+        <h3>آپلود فایل</h3>
+        
+        <div className="form-group">
+          <input
+            type="file"
+            onChange={handleFileChange}
+            disabled={uploading}
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.zip"
+          />
         </div>
-      )}
 
-      {error && (
-        <div className="error-message">{error}</div>
-      )}
+        <div className="form-group">
+          <input
+            type="text"
+            placeholder="توضیحات فایل (اختیاری)"
+            value={description}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)}
+            disabled={uploading}
+          />
+        </div>
 
-      <button
-        onClick={handleUpload}
-        disabled={!file || uploading}
-      >
-        {uploading ? 'Uploading...' : 'Upload'}
-      </button>
-    </div>
+        {uploading && (
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{ width: `${progress}%` }}
+            >
+              {progress}%
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="error-message">{error}</div>
+        )}
+
+        <button
+          onClick={handleUpload}
+          disabled={!file || uploading}
+        >
+          {uploading ? 'در حال آپلود...' : 'آپلود'}
+        </button>
+      </div>
   );
 };
 

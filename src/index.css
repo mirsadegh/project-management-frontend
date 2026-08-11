@@ -1,7 +1,8 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: 'Vazirmatn', system-ui, Tahoma, Arial, sans-serif;
+  line-height: 1.7;
   font-weight: 400;
+  direction: rtl;
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
@@ -11,6 +12,16 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  direction: rtl;
 }
 
 a {
@@ -28,11 +39,13 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  direction: rtl;
+  font-family: 'Vazirmatn', system-ui, Tahoma, Arial, sans-serif;
 }
 
 h1 {
   font-size: 3.2em;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
 button {
@@ -52,6 +65,24 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  direction: rtl;
+  text-align: right;
+}
+
+/* اعداد و تاریخ‌ها می‌توانند LTR باشند */
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="tel"] {
+  direction: ltr;
+  text-align: right;
 }
 
 @media (prefers-color-scheme: light) {

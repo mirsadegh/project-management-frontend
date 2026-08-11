@@ -42,7 +42,7 @@ const CreateProject: React.FC = () => {
       await projectService.createProject(projectData);
       navigate('/projects');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to create project');
+      setError(err.response?.data?.detail || 'ایجاد پروژه ناموفق بود');
     } finally {
       setLoading(false);
     }
@@ -53,10 +53,10 @@ const CreateProject: React.FC = () => {
       <div className="page-header">
         <div className="header-left">
           <button className="back-btn" onClick={() => navigate('/projects')}>
-            ← Back to Projects
+            → بازگشت به پروژه‌ها
           </button>
-          <h1>Create New Project</h1>
-          <p className="page-subtitle">Set up a new project to start organizing your work</p>
+          <h1>ایجاد پروژه جدید</h1>
+          <p className="page-subtitle">پروژه جدیدی راه‌اندازی کنید تا کارهایتان را سازمان‌دهی کنید</p>
         </div>
       </div>
 
@@ -65,51 +65,51 @@ const CreateProject: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="create-project-form">
           <div className="form-section">
-            <h3>Basic Information</h3>
+            <h3>اطلاعات پایه</h3>
 
             <div className="form-group">
-              <label htmlFor="name">Project Name *</label>
+              <label htmlFor="name">نام پروژه *</label>
               <input
                 type="text"
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Enter project name"
+                placeholder="نام پروژه را وارد کنید"
                 required
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="description">Description</label>
+              <label htmlFor="description">توضیحات</label>
               <textarea
                 id="description"
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="Describe your project..."
+                placeholder="پروژه خود را توصیف کنید..."
                 rows={4}
               />
             </div>
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="priority">Priority</label>
+                <label htmlFor="priority">اولویت</label>
                 <select
                   id="priority"
                   name="priority"
                   value={formData.priority}
                   onChange={handleChange}
                 >
-                  <option value="LOW">Low</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HIGH">High</option>
-                  <option value="CRITICAL">Critical</option>
+                  <option value="LOW">کم</option>
+                  <option value="MEDIUM">متوسط</option>
+                  <option value="HIGH">بالا</option>
+                  <option value="CRITICAL">بحرانی</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label htmlFor="budget">Budget (Optional)</label>
+                <label htmlFor="budget">بودجه (اختیاری)</label>
                 <input
                   type="number"
                   id="budget"
@@ -131,18 +131,18 @@ const CreateProject: React.FC = () => {
                   checked={formData.is_public}
                   onChange={handleChange}
                 />
-                Make this project public
+                این پروژه عمومی باشد
               </label>
-              <small className="form-help">Public projects can be viewed by all users</small>
+              <small className="form-help">پروژه‌های عمومی برای همه کاربران قابل مشاهده است</small>
             </div>
           </div>
 
           <div className="form-section">
-            <h3>Timeline</h3>
+            <h3>زمان‌بندی</h3>
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="start_date">Start Date</label>
+                <label htmlFor="start_date">تاریخ شروع</label>
                 <input
                   type="date"
                   id="start_date"
@@ -153,7 +153,7 @@ const CreateProject: React.FC = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="due_date">Due Date</label>
+                <label htmlFor="due_date">مهلت</label>
                 <input
                   type="date"
                   id="due_date"
@@ -171,14 +171,14 @@ const CreateProject: React.FC = () => {
               className="btn-secondary"
               onClick={() => navigate('/projects')}
             >
-              Cancel
+              انصراف
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={loading}
             >
-              {loading ? 'Creating Project...' : 'Create Project'}
+              {loading ? 'در حال ایجاد...' : 'ایجاد پروژه'}
             </button>
           </div>
         </form>

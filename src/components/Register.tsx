@@ -29,13 +29,13 @@ const Register: React.FC = () => {
     setLoading(true);
 
     if (formData.password !== formData.password_confirm) {
-      setError('Passwords do not match');
+      setError('رمزهای عبور یکسان نیستند');
       setLoading(false);
       return;
     }
 
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError('رمز عبور باید حداقل ۸ کاراکتر باشد');
       setLoading(false);
       return;
     }
@@ -57,15 +57,23 @@ const Register: React.FC = () => {
       } else if (data?.detail) {
         setError(data.detail);
       } else if (data && typeof data === 'object') {
-        // DRF field errors: { password: ["..."], email: ["..."] }
+        const fieldNames: Record<string, string> = {
+          username: 'نام کاربری',
+          email: 'ایمیل',
+          password: 'رمز عبور',
+          password_confirm: 'تأیید رمز عبور',
+          first_name: 'نام',
+          last_name: 'نام خانوادگی',
+        };
         const messages = Object.entries(data)
           .flatMap(([field, value]) => {
             const list = Array.isArray(value) ? value : [value];
-            return list.map((msg) => `${field}: ${msg}`);
+            const label = fieldNames[field] || field;
+            return list.map((msg) => `${label}: ${msg}`);
           });
-        setError(messages.join(' ') || 'Registration failed. Please try again.');
+        setError(messages.join(' ') || 'ثبت‌نام ناموفق بود. لطفاً دوباره تلاش کنید.');
       } else {
-        setError('Registration failed. Please try again.');
+        setError('ثبت‌نام ناموفق بود. لطفاً دوباره تلاش کنید.');
       }
     } finally {
       setLoading(false);
@@ -74,8 +82,8 @@ const Register: React.FC = () => {
 
   return (
     <div className="login-container">
-      <h2>Create Account</h2>
-      <p className="login-subtitle">Join the project management platform</p>
+      <h2>ایجاد حساب کاربری</h2>
+      <p className="login-subtitle">به پلتفرم مدیریت پروژه بپیوندید</p>
       
       {error && <div className="error">{error}</div>}
       
@@ -84,7 +92,7 @@ const Register: React.FC = () => {
           <input
             type="text"
             name="first_name"
-            placeholder="First Name"
+            placeholder="نام"
             value={formData.first_name}
             onChange={handleChange}
             required
@@ -92,7 +100,7 @@ const Register: React.FC = () => {
           <input
             type="text"
             name="last_name"
-            placeholder="Last Name"
+            placeholder="نام خانوادگی"
             value={formData.last_name}
             onChange={handleChange}
           />
@@ -101,7 +109,7 @@ const Register: React.FC = () => {
         <input
           type="text"
           name="username"
-          placeholder="Username"
+          placeholder="نام کاربری"
           value={formData.username}
           onChange={handleChange}
           required
@@ -110,7 +118,7 @@ const Register: React.FC = () => {
         <input
           type="email"
           name="email"
-          placeholder="Email"
+          placeholder="ایمیل"
           value={formData.email}
           onChange={handleChange}
           required
@@ -119,7 +127,7 @@ const Register: React.FC = () => {
         <input
           type="password"
           name="password"
-          placeholder="Password (min 8 characters)"
+          placeholder="رمز عبور (حداقل ۸ کاراکتر)"
           value={formData.password}
           onChange={handleChange}
           required
@@ -128,19 +136,19 @@ const Register: React.FC = () => {
         <input
           type="password"
           name="password_confirm"
-          placeholder="Confirm Password"
+          placeholder="تأیید رمز عبور"
           value={formData.password_confirm}
           onChange={handleChange}
           required
         />
         
         <button type="submit" disabled={loading}>
-          {loading ? 'Creating Account...' : 'Create Account'}
+          {loading ? 'در حال ایجاد حساب...' : 'ثبت‌نام'}
         </button>
       </form>
       
       <p className="login-footer">
-        Already have an account? <Link to="/login">Sign in</Link>
+        قبلاً حساب دارید؟ <Link to="/login">وارد شوید</Link>
       </p>
     </div>
   );

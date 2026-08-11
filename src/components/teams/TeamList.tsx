@@ -86,15 +86,15 @@ const TeamList: React.FC<TeamListProps> = () => {
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">👥 Teams</h1>
-            <p className="text-gray-600 mt-1">Manage and collaborate with your teams</p>
+            <h1 className="text-3xl font-bold text-gray-900">👥 تیم‌ها</h1>
+            <p className="text-gray-600 mt-1">با تیم‌های خود همکاری کنید</p>
           </div>
           <button
             onClick={() => navigate('/teams/create')}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
           >
             <Plus size={20} />
-            Create Team
+            ایجاد تیم
           </button>
         </div>
 
@@ -104,7 +104,7 @@ const TeamList: React.FC<TeamListProps> = () => {
             <Search className="absolute left-3 top-3 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search teams..."
+              placeholder="جستجوی تیم‌ها..."
               value={searchTerm}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -116,13 +116,13 @@ const TeamList: React.FC<TeamListProps> = () => {
             onChange={(e: ChangeEvent<HTMLSelectElement>) => setFilterType(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           >
-            <option value="all">🌐 All Types</option>
-            <option value="DEV">💻 Development</option>
-            <option value="DESIGN">🎨 Design</option>
-            <option value="MARKETING">📢 Marketing</option>
-            <option value="SALES">💰 Sales</option>
-            <option value="SUPPORT">🆘 Support</option>
-            <option value="MGMT">📊 Management</option>
+              <option value="all">🌐 همه انواع</option>
+              <option value="DEV">💻 توسعه</option>
+              <option value="DESIGN">🎨 طراحی</option>
+              <option value="MARKETING">📢 بازاریابی</option>
+              <option value="SALES">💰 فروش</option>
+              <option value="SUPPORT">🆘 پشتیبانی</option>
+              <option value="MGMT">📊 مدیریت</option>
           </select>
         </div>
       </div>
@@ -131,7 +131,7 @@ const TeamList: React.FC<TeamListProps> = () => {
       {filteredTeams.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <Users size={48} className="mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-600">No teams found</p>
+          <p className="text-gray-600">تیمی یافت نشد</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -150,9 +150,9 @@ const TeamList: React.FC<TeamListProps> = () => {
                   </span>
                 </div>
                 
-                <p className="text-gray-600 text-sm line-clamp-2">
-                  {team.description || 'No description provided'}
-                </p>
+                 <p className="text-gray-600 text-sm line-clamp-2">
+                   {team.description || 'توضیحی ارائه نشده است'}
+                 </p>
               </div>
 
               {/* Card Body */}
@@ -163,7 +163,7 @@ const TeamList: React.FC<TeamListProps> = () => {
                     {team.lead?.first_name?.charAt(0) || '?'}
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Team Lead</p>
+                     <p className="text-sm text-gray-500">سرپرست تیم</p>
                     <p className="font-semibold text-gray-900">
                       {team.lead?.first_name} {team.lead?.last_name}
                     </p>
@@ -173,11 +173,11 @@ const TeamList: React.FC<TeamListProps> = () => {
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-500">👥 Members</p>
+                     <p className="text-sm text-gray-500">👥 اعضا</p>
                     <p className="text-2xl font-bold text-gray-900">{team.member_count}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">📊 Projects</p>
+                     <p className="text-sm text-gray-500">📊 پروژه‌ها</p>
                     <p className="text-2xl font-bold text-gray-900">{team.total_projects}</p>
                   </div>
                 </div>
@@ -186,7 +186,7 @@ const TeamList: React.FC<TeamListProps> = () => {
                 {team.total_projects > 0 && (
                   <div className="mt-4">
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Completion Rate</span>
+                      <span className="text-gray-600">نرخ تکمیل</span>
                       <span className="font-semibold text-green-600">{team.completion_rate}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -202,22 +202,22 @@ const TeamList: React.FC<TeamListProps> = () => {
                 <div className="mt-4 flex items-center justify-between">
                   {team.is_full ? (
                     <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">
-                      🔒 Full
+                      🔒 تکمیل
                     </span>
                   ) : team.allow_self_join ? (
                     <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                      ✅ Open to Join
+                      ✅ باز برای عضویت
                     </span>
                   ) : (
                     <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
-                      📨 Invite Only
+                      📨 فقط با دعوت
                     </span>
                   )}
 
                   {team.is_active ? (
-                    <span className="text-green-600 text-sm font-semibold">● Active</span>
+                    <span className="text-green-600 text-sm font-semibold">● فعال</span>
                   ) : (
-                    <span className="text-gray-400 text-sm font-semibold">● Inactive</span>
+                    <span className="text-gray-400 text-sm font-semibold">● غیرفعال</span>
                   )}
                 </div>
               </div>

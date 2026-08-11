@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../services/contexts/AuthContext';
 import { authService, type UserProfile } from '../services/authService';
+import { getRoleLabel, formatDate, formatDateTime } from '../utils/labels';
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
@@ -33,17 +34,17 @@ const Profile: React.FC = () => {
     setMessage(null);
     try {
       await authService.updateProfile(formData);
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setMessage({ type: 'success', text: 'پروفایل با موفقیت به‌روزرسانی شد!' });
       setIsEditing(false);
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
+    } catch {
+      setMessage({ type: 'error', text: 'به‌روزرسانی پروفایل ناموفق بود. لطفاً دوباره تلاش کنید.' });
     } finally {
       setLoading(false);
     }
   };
 
   if (!user) {
-    return <div className="profile-container">Loading...</div>;
+    return <div className="profile-container">در حال بارگذاری...</div>;
   }
 
   return (
@@ -60,11 +61,11 @@ const Profile: React.FC = () => {
         </div>
         <div className="profile-title">
           <h1>{user.full_name || user.username}</h1>
-          <p className="profile-role">{user.role === 'ADMIN' ? 'Admin' : user.role}</p>
+          <p className="profile-role">{getRoleLabel(user.role)}</p>
           <p className="profile-email">{user.email}</p>
         </div>
         <button className="edit-button" onClick={() => setIsEditing(!isEditing)}>
-          {isEditing ? 'Cancel' : 'Edit Profile'}
+          {isEditing ? 'انصراف' : 'ویرایش پروفایل'}
         </button>
       </div>
 
@@ -78,7 +79,7 @@ const Profile: React.FC = () => {
         <form onSubmit={handleSubmit} className="profile-form">
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="first_name">First Name</label>
+              <label htmlFor="first_name">نام</label>
               <input
                 type="text"
                 id="first_name"
@@ -88,7 +89,7 @@ const Profile: React.FC = () => {
               />
             </div>
             <div className="form-group">
-              <label htmlFor="last_name">Last Name</label>
+              <label htmlFor="last_name">نام خانوادگی</label>
               <input
                 type="text"
                 id="last_name"
@@ -100,7 +101,7 @@ const Profile: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="job_title">Job Title</label>
+            <label htmlFor="job_title">عنوان شغلی</label>
             <input
               type="text"
               id="job_title"
@@ -111,7 +112,7 @@ const Profile: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="department">Department</label>
+            <label htmlFor="department">دپارتمان</label>
             <input
               type="text"
               id="department"
@@ -122,101 +123,94 @@ const Profile: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="phone_number">Phone Number</label>
+            <label htmlFor="phone_number">شماره تلفن</label>
             <input
               type="tel"
               id="phone_number"
               name="phone_number"
               value={formData.phone_number || ''}
               onChange={handleChange}
-              placeholder="09123456789"
+              placeholder="۰۹۱۲۳۴۵۶۷۸۹"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="bio">Bio</label>
+            <label htmlFor="bio">بیوگرافی</label>
             <textarea
               id="bio"
               name="bio"
               value={formData.bio || ''}
               onChange={handleChange}
               rows={4}
-              placeholder="Tell us about yourself..."
+              placeholder="درباره خودتان بنویسید..."
             />
           </div>
 
           <button type="submit" className="save-button" disabled={loading}>
-            {loading ? 'Saving...' : 'Save Changes'}
+            {loading ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
           </button>
         </form>
       ) : (
         <div className="profile-details">
           <div className="detail-section">
-            <h3>Personal Information</h3>
+            <h3>اطلاعات شخصی</h3>
             <div className="detail-grid">
               <div className="detail-item">
-                <span className="detail-label">Username</span>
+                <span className="detail-label">نام کاربری</span>
                 <span className="detail-value">{user.username}</span>
               </div>
               <div className="detail-item">
-                <span className="detail-label">Email</span>
+                <span className="detail-label">ایمیل</span>
                 <span className="detail-value">{user.email}</span>
               </div>
               <div className="detail-item">
-                <span className="detail-label">Phone</span>
-                <span className="detail-value">{user.phone_number || 'Not provided'}</span>
+                <span className="detail-label">تلفن</span>
+                <span className="detail-value">{user.phone_number || 'ثبت نشده'}</span>
               </div>
               <div className="detail-item">
-                <span className="detail-label">Bio</span>
-                <span className="detail-value">{user.bio || 'Not provided'}</span>
+                <span className="detail-label">بیوگرافی</span>
+                <span className="detail-value">{user.bio || 'ثبت نشده'}</span>
               </div>
             </div>
           </div>
 
           <div className="detail-section">
-            <h3>Work Information</h3>
+            <h3>اطلاعات شغلی</h3>
             <div className="detail-grid">
               <div className="detail-item">
-                <span className="detail-label">Job Title</span>
-                <span className="detail-value">{user.job_title || 'Not set'}</span>
+                <span className="detail-label">عنوان شغلی</span>
+                <span className="detail-value">{user.job_title || 'تعیین نشده'}</span>
               </div>
               <div className="detail-item">
-                <span className="detail-label">Department</span>
-                <span className="detail-value">{user.department || 'Not set'}</span>
+                <span className="detail-label">دپارتمان</span>
+                <span className="detail-value">{user.department || 'تعیین نشده'}</span>
               </div>
               <div className="detail-item">
-                <span className="detail-label">Role</span>
-                <span className="detail-value">
-                  {user.role === 'ADMIN' ? 'Admin' : 
-                   user.role === 'PM' ? 'Project Manager' : 
-                   user.role === 'TL' ? 'Team Lead' : 
-                   user.role === 'DEV' ? 'Developer' : 
-                   user.role === 'DES' ? 'Designer' : 
-                   user.role === 'CLIENT' ? 'Client' : user.role}
-                </span>
+                <span className="detail-label">نقش</span>
+                <span className="detail-value">{getRoleLabel(user.role)}</span>
               </div>
               <div className="detail-item">
-                <span className="detail-label">Availability</span>
+                <span className="detail-label">وضعیت</span>
                 <span className={`detail-value ${user.is_available ? 'available' : 'unavailable'}`}>
-                  {user.is_available ? 'Available' : 'Not Available'}
+                  {user.is_available ? 'در دسترس' : 'غیرقابل دسترس'}
                 </span>
               </div>
             </div>
           </div>
 
           <div className="detail-section">
-            <h3>Account Information</h3>
+            <h3>اطلاعات حساب</h3>
             <div className="detail-grid">
               <div className="detail-item">
-                <span className="detail-label">Member Since</span>
+                <span className="detail-label">عضویت از</span>
                 <span className="detail-value">
-                  {user.date_joined ? new Date(user.date_joined).toLocaleDateString() : 'Unknown'}
+                  {user.date_joined ? formatDate(user.date_joined) : 'نامشخص'}
                 </span>
               </div>
               <div className="detail-item">
-                <span className="detail-label">Last Login</span>
+                <span className="detail-label">آخرین ورود</span>
                 <span className="detail-value">
-                  {user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}
+                  {user.last_login ? formatDateTime(user.last_login) : 'هرگز'}
                 </span>
               </div>
             </div>

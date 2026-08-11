@@ -18,7 +18,7 @@ const NotificationsList: React.FC = () => {
       const data = await notificationService.getNotifications({ is_read: isRead });
       setNotifications(data);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to load notifications');
+      setError(err.response?.data?.detail || 'بارگذاری اعلان‌ها ناموفق بود');
     } finally {
       setLoading(false);
     }
@@ -64,28 +64,28 @@ const NotificationsList: React.FC = () => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
+    if (diffMins < 1) return 'همین الان';
+    if (diffMins < 60) return `${diffMins} دقیقه پیش`;
+    if (diffHours < 24) return `${diffHours} ساعت پیش`;
+    if (diffDays < 7) return `${diffDays} روز پیش`;
+    return date.toLocaleDateString('fa-IR');
   };
 
   if (loading) {
-    return <div className="page-loading">Loading notifications...</div>;
+    return <div className="page-loading">در حال بارگذاری اعلان‌ها...</div>;
   }
 
   return (
     <div className="notifications-page">
       <div className="page-header">
         <div className="header-left">
-          <h1>Notifications</h1>
-          <p className="page-subtitle">Stay updated with your activity</p>
+          <h1>اعلان‌ها</h1>
+          <p className="page-subtitle">از فعالیت‌های خود به‌روز بمانید</p>
         </div>
         <div className="header-actions">
           {notifications.some((n) => !n.is_read) && (
             <button className="btn-secondary" onClick={handleMarkAllAsRead}>
-              Mark all as read
+              علامت‌گذاری همه به‌عنوان خوانده‌شده
             </button>
           )}
         </div>
@@ -96,19 +96,19 @@ const NotificationsList: React.FC = () => {
           className={`tab ${filter === 'all' ? 'active' : ''}`}
           onClick={() => setFilter('all')}
         >
-          All
+          همه
         </button>
         <button
           className={`tab ${filter === 'unread' ? 'active' : ''}`}
           onClick={() => setFilter('unread')}
         >
-          Unread
+          خوانده‌نشده
         </button>
         <button
           className={`tab ${filter === 'read' ? 'active' : ''}`}
           onClick={() => setFilter('read')}
         >
-          Read
+          خوانده‌شده
         </button>
       </div>
 
@@ -117,8 +117,8 @@ const NotificationsList: React.FC = () => {
       {notifications.length === 0 ? (
         <div className="empty-notifications">
           <div className="empty-icon">🔔</div>
-          <h3>No notifications</h3>
-          <p>You're all caught up!</p>
+          <h3>اعلانی وجود ندارد</h3>
+          <p>همه چیز به‌روز است!</p>
         </div>
       ) : (
         <div className="notifications-list">
@@ -141,7 +141,7 @@ const NotificationsList: React.FC = () => {
                     className="mark-read-btn"
                     onClick={() => handleMarkAsRead(notification.id)}
                   >
-                    Mark as read
+                    علامت به‌عنوان خوانده‌شده
                   </button>
                 )}
               </div>

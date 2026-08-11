@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { projectService, type Project } from '../services/projectService';
+import { getStatusLabel, getPriorityLabel, formatDate } from '../utils/labels';
 
 const ProjectsList: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -19,7 +20,7 @@ const ProjectsList: React.FC = () => {
       const data = await projectService.getProjects();
       setProjects(data);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to load projects');
+      setError(err.response?.data?.detail || 'بارگذاری پروژه‌ها ناموفق بود');
     } finally {
       setLoading(false);
     }
@@ -52,26 +53,26 @@ const ProjectsList: React.FC = () => {
   );
 
   if (loading) {
-    return <div className="page-loading">Loading projects...</div>;
+    return <div className="page-loading">در حال بارگذاری پروژه‌ها...</div>;
   }
 
   return (
     <div className="projects-page">
       <div className="page-header">
         <div className="header-left">
-          <h1>Projects</h1>
-          <p className="page-subtitle">Manage and track all your projects</p>
+          <h1>پروژه‌ها</h1>
+          <p className="page-subtitle">مدیریت و پیگیری تمام پروژه‌های شما</p>
         </div>
         <div className="header-actions">
           <input
             type="text"
-            placeholder="Search projects..."
+            placeholder="جستجوی پروژه‌ها..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="search-input"
           />
           <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
-            + New Project
+            + پروژه جدید
           </button>
         </div>
       </div>
@@ -81,10 +82,10 @@ const ProjectsList: React.FC = () => {
       {filteredProjects.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📋</div>
-          <h3>No projects yet</h3>
-          <p>Create your first project to get started</p>
+          <h3>هنوز پروژه‌ای وجود ندارد</h3>
+          <p>اولین پروژه خود را بسازید تا شروع کنید</p>
           <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
-            Create Project
+            ایجاد پروژه
           </button>
         </div>
       ) : (
@@ -98,25 +99,25 @@ const ProjectsList: React.FC = () => {
                     className="status-badge"
                     style={{ backgroundColor: getStatusColor(project.status) }}
                   >
-                    {project.status.replace('_', ' ')}
+                    {getStatusLabel(project.status)}
                   </span>
                   <span 
                     className="priority-badge"
                     style={{ backgroundColor: getPriorityColor(project.priority) }}
                   >
-                    {project.priority}
+                    {getPriorityLabel(project.priority)}
                   </span>
                 </div>
               </div>
               
               <p className="project-description">
-                {project.description || 'No description provided'}
+                {project.description || 'توضیحی ثبت نشده است'}
               </p>
               
               <div className="project-progress">
                 <div className="progress-header">
-                  <span>Progress</span>
-                  <span>{project.progress}%</span>
+                  <span>پیشرفت</span>
+                  <span>{project.progress}٪</span>
                 </div>
                 <div className="progress-bar">
                   <div 
@@ -129,15 +130,15 @@ const ProjectsList: React.FC = () => {
               <div className="project-stats">
                 <div className="stat">
                   <span className="stat-value">{project.total_tasks}</span>
-                  <span className="stat-label">Tasks</span>
+                  <span className="stat-label">وظایف</span>
                 </div>
                 <div className="stat">
                   <span className="stat-value">{project.completed_tasks}</span>
-                  <span className="stat-label">Completed</span>
+                  <span className="stat-label">تکمیل‌شده</span>
                 </div>
                 <div className="stat">
                   <span className="stat-value">{project.total_tasks - project.completed_tasks}</span>
-                  <span className="stat-label">Remaining</span>
+                  <span className="stat-label">باقی‌مانده</span>
                 </div>
               </div>
               
@@ -151,12 +152,12 @@ const ProjectsList: React.FC = () => {
                       <span>{project.manager.full_name || project.manager.username}</span>
                     </>
                   ) : (
-                    <span className="no-manager">No manager assigned</span>
+                    <span className="no-manager">مدیری تعیین نشده</span>
                   )}
                 </div>
                 {project.due_date && (
                   <span className={`due-date ${project.is_overdue ? 'overdue' : ''}`}>
-                    Due: {new Date(project.due_date).toLocaleDateString()}
+                    مهلت: {formatDate(project.due_date)}
                   </span>
                 )}
               </div>
@@ -207,7 +208,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onCrea
       onCreated();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to create project');
+      setError(err.response?.data?.detail || 'ایجاد پروژه ناموفق بود');
     } finally {
       setLoading(false);
     }
@@ -217,7 +218,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onCrea
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Create New Project</h2>
+          <h2>ایجاد پروژه جدید</h2>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
         
@@ -225,44 +226,44 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onCrea
           {error && <div className="error-message">{error}</div>}
           
           <div className="form-group">
-            <label>Project Name *</label>
+            <label>نام پروژه *</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Enter project name"
+              placeholder="نام پروژه را وارد کنید"
               required
             />
           </div>
           
           <div className="form-group">
-            <label>Description</label>
+            <label>توضیحات</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Enter project description"
+              placeholder="توضیحات پروژه را وارد کنید"
               rows={3}
             />
           </div>
           
           <div className="form-row">
             <div className="form-group">
-              <label>Priority</label>
+              <label>اولویت</label>
               <select
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' })}
               >
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="CRITICAL">Critical</option>
+                <option value="LOW">کم</option>
+                <option value="MEDIUM">متوسط</option>
+                <option value="HIGH">بالا</option>
+                <option value="CRITICAL">بحرانی</option>
               </select>
             </div>
           </div>
           
           <div className="form-row">
             <div className="form-group">
-              <label>Start Date</label>
+              <label>تاریخ شروع</label>
               <input
                 type="date"
                 value={formData.start_date}
@@ -270,7 +271,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onCrea
               />
             </div>
             <div className="form-group">
-              <label>Due Date</label>
+              <label>مهلت</label>
               <input
                 type="date"
                 value={formData.due_date}
@@ -281,10 +282,10 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onCrea
           
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={onClose}>
-              Cancel
+              انصراف
             </button>
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Project'}
+              {loading ? 'در حال ایجاد...' : 'ایجاد پروژه'}
             </button>
           </div>
         </form>
