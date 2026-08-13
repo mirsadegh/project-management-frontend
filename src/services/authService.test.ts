@@ -109,7 +109,7 @@ describe('authService', () => {
       const result = await authService.getCurrentUser();
       
       // Verify API was called with correct endpoint
-      expect(api.get).toHaveBeenCalledWith('/accounts/profile/');
+      expect(api.get).toHaveBeenCalledWith('/accounts/users/me/');
       
       // Verify user data is returned
       expect(result).toEqual(mockUser);
@@ -131,7 +131,7 @@ describe('authService', () => {
       const result = await authService.updateProfile({ username: 'updateduser' });
       
       // Verify API was called with correct endpoint and data
-      expect(api.patch).toHaveBeenCalledWith('/accounts/profile/', { username: 'updateduser' });
+      expect(api.patch).toHaveBeenCalledWith('/accounts/users/me/', { username: 'updateduser' });
       
       // Verify updated user data is returned
       expect(result).toEqual(updatedUser);

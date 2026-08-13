@@ -71,6 +71,7 @@ export interface PaginatedTaskResponse {
   total_pages: number;
   current_page: number;
   results: Task[];
+  tasks?: Task[];
 }
 
 export interface PaginatedTaskLabelResponse {
@@ -95,7 +96,7 @@ export const taskService = {
     if (filters?.assignee) params.append('assignee', filters.assignee.toString());
 
     const response = await api.get<PaginatedTaskResponse>(`/tasks/tasks/?project=${projectId}&${params.toString()}`);
-    return response.data.results;
+    return response.data.tasks ?? response.data.results;
   },
 
   async getTask(taskId: number): Promise<Task> {

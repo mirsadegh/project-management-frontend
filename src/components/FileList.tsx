@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Download, Eye, Trash2 } from 'lucide-react';
 // 1. سرویس api خود را وارد کنید
 import api from '../services/api';
@@ -27,7 +27,7 @@ interface FileListProps {
   objectId: number;
 }
 
-const FileList: React.FC<FileListProps> = ({ contentType, objectId }) => {
+const FileList = ({ contentType, objectId }: FileListProps) => {
   // 4. تایپ کردن state ها
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

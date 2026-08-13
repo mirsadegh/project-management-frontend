@@ -32,13 +32,14 @@ global.localStorage = {
 
 // Mock console.error to suppress React act() warnings in tests
 // This is a common pattern to reduce noise in test output
+const originalConsoleError = console.error;
 beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation((...args) => {
     if (args[0] && typeof args[0] === 'string' && args[0].includes('Warning: An update to')) {
       // Suppress React act() warnings
       return;
     }
-    console.error(...args);
+    originalConsoleError(...args);
   });
 });
 

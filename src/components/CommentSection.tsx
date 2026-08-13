@@ -1,4 +1,5 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
 // 1. سرویس api خود را وارد کنید
 import api from '../services/api';
 import { formatDateTime } from '../utils/labels';
@@ -30,7 +31,7 @@ interface CommentSectionProps {
   objectId: number;
 }
 
-const CommentSection: React.FC<CommentSectionProps> = ({ contentType, objectId }) => {
+const CommentSection = ({ contentType, objectId }: CommentSectionProps) => {
   // 4. تایپ کردن state ها
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState<string>('');

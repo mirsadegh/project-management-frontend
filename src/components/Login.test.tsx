@@ -41,10 +41,10 @@ describe('Login Component', () => {
   it('renders login form correctly', () => {
     render(<Login />);
 
-    expect(screen.getByRole('heading', { name: 'Welcome Back' })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Email')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Password')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'خوش آمدید' })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('ایمیل')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('رمز عبور')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ورود' })).toBeInTheDocument();
   });
 
   it('shows error message when login fails', async () => {
@@ -59,14 +59,14 @@ describe('Login Component', () => {
 
     render(<Login />);
 
-    fireEvent.change(screen.getByPlaceholderText('Email'), {
+    fireEvent.change(screen.getByPlaceholderText('ایمیل'), {
       target: { value: mockLoginCredentials.email },
     });
-    fireEvent.change(screen.getByPlaceholderText('Password'), {
+    fireEvent.change(screen.getByPlaceholderText('رمز عبور'), {
       target: { value: mockLoginCredentials.password },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
+    fireEvent.click(screen.getByRole('button', { name: 'ورود' }));
 
     await waitFor(() => {
       expect(screen.getByText('Login failed')).toBeInTheDocument();
@@ -99,13 +99,13 @@ describe('Login Component', () => {
 
     render(<Login />);
 
-    fireEvent.change(screen.getByPlaceholderText('Email'), {
+    fireEvent.change(screen.getByPlaceholderText('ایمیل'), {
       target: { value: mockLoginCredentials.email },
     });
-    fireEvent.change(screen.getByPlaceholderText('Password'), {
+    fireEvent.change(screen.getByPlaceholderText('رمز عبور'), {
       target: { value: mockLoginCredentials.password },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
+    fireEvent.click(screen.getByRole('button', { name: 'ورود' }));
 
     await waitFor(() => {
       expect(
@@ -126,14 +126,14 @@ describe('Login Component', () => {
 
     render(<Login />);
 
-    fireEvent.change(screen.getByPlaceholderText('Email'), {
+    fireEvent.change(screen.getByPlaceholderText('ایمیل'), {
       target: { value: mockLoginCredentials.email },
     });
-    fireEvent.change(screen.getByPlaceholderText('Password'), {
+    fireEvent.change(screen.getByPlaceholderText('رمز عبور'), {
       target: { value: mockLoginCredentials.password },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
+    fireEvent.click(screen.getByRole('button', { name: 'ورود' }));
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
@@ -148,9 +148,9 @@ describe('Login Component', () => {
   it('validates email and password fields', async () => {
     render(<Login />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
+    fireEvent.click(screen.getByRole('button', { name: 'ورود' }));
 
-    expect(screen.getByPlaceholderText('Email')).toBeInvalid();
-    expect(screen.getByPlaceholderText('Password')).toBeInvalid();
+    expect(screen.getByPlaceholderText('ایمیل')).toBeInvalid();
+    expect(screen.getByPlaceholderText('رمز عبور')).toBeInvalid();
   });
 });

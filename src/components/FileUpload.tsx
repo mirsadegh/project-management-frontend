@@ -1,5 +1,6 @@
-import React, { useState, ChangeEvent } from 'react';
-import axios, { AxiosProgressEvent } from 'axios';
+import { useState } from 'react';
+import type { ChangeEvent } from 'react';
+import type { AxiosProgressEvent } from 'axios';
 // 1. سرویس api خود را وارد کنید
 import api from '../services/api'; 
 
@@ -19,7 +20,7 @@ interface FileUploadProps {
   onUploadComplete: (data: UploadResponse) => void; // تابعی که پس از آپلود موفق اجرا می‌شود
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ contentType, objectId, onUploadComplete }) => {
+const FileUpload = ({ contentType, objectId, onUploadComplete }: FileUploadProps) => {
   // تایپ کردن state ها
   const [file, setFile] = useState<File | null>(null);
   const [description, setDescription] = useState<string>('');

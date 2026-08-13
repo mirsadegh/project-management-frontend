@@ -1,20 +1,33 @@
 // src/components/FileUpload.test.tsx
-import React from 'react';
-import { render, screen, fireEvent } from '../tests/test-utils';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '../tests/test-utils';
 import FileUpload from './FileUpload';
 import { useAuth } from '../services/contexts/AuthContext';
+import api from '../services/api';
 
-// Mock the useAuth hook
-vi.mock('../services/contexts/AuthContext', () => ({
-  useAuth: vi.fn(),
+// Mock the useAuth hook (preserve AuthProvider used by the test renderer)
+vi.mock('../services/contexts/AuthContext', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useAuth: vi.fn(),
+  };
+});
+
+// Mock the api module (component uploads via axios interceptor)
+vi.mock('../services/api', () => ({
+  default: {
+    post: vi.fn(),
+  },
 }));
+
+const mockedApi = api as unknown as { post: ReturnType<typeof vi.fn> };
 
 describe('FileUpload Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Mock the useAuth hook
-    (useAuth as jest.Mock).mockReturnValue({
+
+    (useAuth as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       user: { id: 1, username: 'testuser' },
       login: vi.fn(),
       logout: vi.fn(),
@@ -24,72 +37,73 @@ describe('FileUpload Component', () => {
   });
 
   it('renders file upload component', () => {
-    render(<FileUpload taskId={1} />);
-    
-    expect(screen.getByText('Upload Files')).toBeInTheDocument();
-    expect(screen.getByLabelText('Select files')).toBeInTheDocument();
-  });
+    const { container } = render(
+      <FileUpload contentType="task" objectId={1} onUploadComplete={() => {}} />
+    );
 
-  it('shows file selection when files are chosen', () => {
-    render(<FileUpload taskId={1} />);
-    
-    // Create a mock file
-    const mockFile = new File(['test content'], 'test.txt', { type: 'text/plain' });
-    
-    // Mock file input
-    const fileInput = screen.getByLabelText('Select files');
-    fireEvent.change(fileInput, { target: { files: [mockFile] } });
-    
-    // Check that the file name is displayed
-    expect(screen.getByText('test.txt')).toBeInTheDocument();
+    expect(screen.getByText('آپلود فایل')).toBeInTheDocument();
+    expect(container.querySelector('input[type="file"]')).toBeInTheDocument();
   });
 
   it('disables upload button when no files are selected', () => {
-    render(<FileUpload taskId={1} />);
-    
-    const uploadButton = screen.getByRole('button', { name: 'Upload' });
+    render(<FileUpload contentType="task" objectId={1} onUploadComplete={() => {}} />);
+
+    const uploadButton = screen.getByRole('button', { name: 'آپلود' });
     expect(uploadButton).toBeDisabled();
   });
 
-  it('enables upload button when files are selected', () => {
-    render(<FileUpload taskId={1} />);
-    
-    // Create a mock file
+  it('enables upload button when a file is selected', () => {
+    const { container } = render(
+      <FileUpload contentType="task" objectId={1} onUploadComplete={() => {}} />
+    );
+
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     const mockFile = new File(['test content'], 'test.txt', { type: 'text/plain' });
-    
-    // Mock file input
-    const fileInput = screen.getByLabelText('Select files');
     fireEvent.change(fileInput, { target: { files: [mockFile] } });
-    
-    const uploadButton = screen.getByRole('button', { name: 'Upload' });
+
+    const uploadButton = screen.getByRole('button', { name: 'آپلود' });
     expect(uploadButton).not.toBeDisabled();
   });
 
   it('shows error message when file upload fails', async () => {
-    // Mock console.error to capture errors
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
-    render(<FileUpload taskId={1} />);
-    
-    // Create a mock file
+    mockedApi.post.mockRejectedValue(new Error('Upload failed'));
+
+    const { container } = render(
+      <FileUpload contentType="task" objectId={1} onUploadComplete={() => {}} />
+    );
+
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     const mockFile = new File(['test content'], 'test.txt', { type: 'text/plain' });
-    
-    // Mock file input
-    const fileInput = screen.getByLabelText('Select files');
     fireEvent.change(fileInput, { target: { files: [mockFile] } });
-    
-    // Mock fetch to reject
-    global.fetch = vi.fn().mockRejectedValue(new Error('Upload failed'));
-    
-    // Click upload button
-    const uploadButton = screen.getByRole('button', { name: 'Upload' });
-    fireEvent.click(uploadButton);
-    
-    // Wait for error to be handled
+
+    fireEvent.click(screen.getByRole('button', { name: 'آپلود' }));
+
     await waitFor(() => {
-      expect(screen.getByText('Error uploading files')).toBeInTheDocument();
+      expect(screen.getByText('Upload failed')).toBeInTheDocument();
     });
-    
-    consoleErrorSpy.mockRestore();
+  });
+
+  it('calls onUploadComplete when file upload succeeds', async () => {
+    mockedApi.post.mockResolvedValue({ data: { id: 1, file: 'x', description: 'd' } });
+    const onUploadComplete = vi.fn();
+
+    const { container } = render(
+      <FileUpload contentType="task" objectId={1} onUploadComplete={onUploadComplete} />
+    );
+
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const mockFile = new File(['test content'], 'test.txt', { type: 'text/plain' });
+    fireEvent.change(fileInput, { target: { files: [mockFile] } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'آپلود' }));
+
+    await waitFor(() => {
+      expect(onUploadComplete).toHaveBeenCalled();
+    });
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      '/files/attachments/',
+      expect.any(FormData),
+      expect.objectContaining({ onUploadProgress: expect.any(Function) })
+    );
   });
 });

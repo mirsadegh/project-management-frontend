@@ -1,6 +1,7 @@
 // src/services/contexts/AuthContext.test.tsx
 import React from 'react';
-import { render, screen, waitFor, act } from '../../tests/test-utils';
+import { render, screen, waitFor, act, fireEvent } from '../../tests/test-utils';
+import { render as rawRender } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { authService } from '../../services/authService';
 import { mockUser, mockAuthTokens } from '../../tests/mockData';
@@ -115,7 +116,7 @@ describe('AuthContext', () => {
         }
       };
       
-      render(<TestComponent />);
+      rawRender(<TestComponent />);
       
       expect(screen.getByTestId('error')).toHaveTextContent('useAuth must be used within an AuthProvider');
     });
@@ -146,7 +147,7 @@ describe('AuthContext', () => {
       
       // Wait for login to complete
       await waitFor(() => {
-        expect(authService.login).toHaveBeenCalledWith('test@example.com', 'password');
+        expect(authService.login).toHaveBeenCalledWith({ email: 'test@example.com', password: 'password' });
         expect(authService.getCurrentUser).toHaveBeenCalled();
         expect(screen.getByTestId('user')).toHaveTextContent(mockUser.username);
       });

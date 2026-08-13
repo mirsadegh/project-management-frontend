@@ -17,7 +17,7 @@ interface WebSocketMessage {
   notification?: Notification; // چون ممکن است پیام دیگری هم ارسال شود، notification اختیاری است
 }
 
-const NotificationListener: React.FC = () => {
+const NotificationListener = () => {
   useEffect(() => {
     const WS_URL = 'ws://localhost:8000/ws/notifications/';
 
