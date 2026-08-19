@@ -34,6 +34,31 @@ export interface UserSummary {
   role: string;
 }
 
+export interface ProjectStatistics {
+  total_tasks: number;
+  completed_tasks: number;
+  in_progress_tasks: number;
+  todo_tasks: number;
+  blocked_tasks: number;
+  in_review_tasks: number;
+  overdue_tasks: number;
+  total_members: number;
+}
+
+export interface ProjectReport {
+  project_name: string;
+  total_tasks: number;
+  completed: number;
+  in_progress: number;
+  members: number;
+}
+
+export interface ProjectTeamInfo {
+  your_role: string;
+  total_members: number;
+  members: ProjectMember[];
+}
+
 export interface ProjectMember {
   id: number;
   user: UserSummary;

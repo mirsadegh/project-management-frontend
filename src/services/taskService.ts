@@ -1,4 +1,5 @@
 import api from './api';
+import { unwrapList } from './pagination';
 
 export interface Task {
   id: number;
@@ -83,6 +84,17 @@ export interface PaginatedTaskLabelResponse {
   results: TaskLabel[];
 }
 
+export interface TaskOrder {
+  id: number;
+  order: number;
+}
+
+export interface TaskListUpdateData {
+  name?: string;
+  description?: string;
+  position?: number;
+}
+
 export const taskService = {
   async getTaskLists(projectId: number): Promise<TaskList[]> {
     const response = await api.get<PaginatedTaskListResponse>(`/tasks/task-lists/?project=${projectId}`);
@@ -129,5 +141,103 @@ export const taskService = {
   async getLabels(projectId: number): Promise<TaskLabel[]> {
     const response = await api.get<PaginatedTaskLabelResponse>(`/tasks/labels/?project=${projectId}`);
     return response.data.results;
+  },
+
+  async getMyTasks(filters?: TaskFilters): Promise<Task[]> {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.priority) params.append('priority', filters.priority);
+
+    const query = params.toString();
+    const response = await api.get<PaginatedTaskResponse>(
+      `/tasks/tasks/my_tasks/${query ? `?${query}` : ''}`
+    );
+    return response.data.tasks ?? response.data.results;
+  },
+
+  async getAllTasks(limit = 20, offset = 0): Promise<Task[]> {
+    const response = await api.get<{ results: Task[] }>(
+      `/tasks/tasks/all_tasks/?limit=${limit}&offset=${offset}`
+    );
+    return unwrapList(response.data);
+  },
+
+  async assignTask(taskId: number, userId: number): Promise<Task> {
+    const response = await api.post<Task>(`/tasks/tasks/${taskId}/assign/`, {
+      user_id: userId,
+    });
+    return response.data;
+  },
+
+  async changeTaskStatus(taskId: number, status: Task['status']): Promise<Task> {
+    const response = await api.post<Task>(`/tasks/tasks/${taskId}/change_status/`, { status });
+    return response.data;
+  },
+
+  async markTaskComplete(
+    taskId: number,
+    actualHours?: number
+  ): Promise<{ message: string; task: Task }> {
+    const response = await api.post<{ message: string; task: Task }>(
+      `/tasks/tasks/${taskId}/mark_complete/`,
+      actualHours !== undefined ? { actual_hours: actualHours } : {}
+    );
+    return response.data;
+  },
+
+  async logTaskTime(
+    taskId: number,
+    hours: number
+  ): Promise<{ message: string; total_hours: number }> {
+    const response = await api.post<{ message: string; total_hours: number }>(
+      `/tasks/tasks/${taskId}/log_time/`,
+      { hours }
+    );
+    return response.data;
+  },
+
+  async bulkAssignTasks(
+    taskIds: number[],
+    assigneeId: number
+  ): Promise<{ message: string; updated_tasks: number }> {
+    const response = await api.post<{ message: string; updated_tasks: number }>(
+      '/tasks/tasks/bulk_assign/',
+      { task_ids: taskIds, assignee_id: assigneeId }
+    );
+    return response.data;
+  },
+
+  async reorderTasks(taskListId: number, taskOrders: TaskOrder[]): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>(`/tasks/tasks/${taskListId}/reorder/`, {
+      task_orders: taskOrders,
+    });
+    return response.data;
+  },
+
+  async updateTaskList(taskListId: number, data: TaskListUpdateData): Promise<TaskList> {
+    const response = await api.patch<TaskList>(`/tasks/task-lists/${taskListId}/`, data);
+    return response.data;
+  },
+
+  async deleteTaskList(taskListId: number): Promise<void> {
+    await api.delete(`/tasks/task-lists/${taskListId}/`);
+  },
+
+  async createLabel(projectId: number, name: string, color: string): Promise<TaskLabel> {
+    const response = await api.post<TaskLabel>('/tasks/labels/', {
+      project: projectId,
+      name,
+      color,
+    });
+    return response.data;
+  },
+
+  async updateLabel(labelId: number, data: Partial<TaskLabel>): Promise<TaskLabel> {
+    const response = await api.patch<TaskLabel>(`/tasks/labels/${labelId}/`, data);
+    return response.data;
+  },
+
+  async deleteLabel(labelId: number): Promise<void> {
+    await api.delete(`/tasks/labels/${labelId}/`);
   },
 };

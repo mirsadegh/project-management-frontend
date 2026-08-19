@@ -116,6 +116,10 @@ export const notificationService = {
     return response.data;
   },
 
+  async deletePreference(preferenceId: number): Promise<void> {
+    await api.delete(`/notifications/preferences/${preferenceId}/`);
+  },
+
   async getTemplates(): Promise<NotificationTemplate[]> {
     const response = await api.get<NotificationTemplate[] | { results: NotificationTemplate[] }>(
       '/notifications/templates/'
