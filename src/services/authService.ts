@@ -100,4 +100,52 @@ export const authService = {
     }>('/accounts/users/');
     return response.data.results || [];
   },
+
+  async getUser(userId: number): Promise<UserProfile> {
+    const response = await api.get<UserProfile>(`/accounts/users/${userId}/`);
+    return response.data;
+  },
+
+  async verifyToken(token?: string): Promise<boolean> {
+    const access = token || localStorage.getItem('accessToken');
+    if (!access) return false;
+    try {
+      await api.post('/accounts/auth/verify/', { token: access });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  async changePassword(oldPassword: string, newPassword: string, newPasswordConfirm: string): Promise<void> {
+    await api.post('/accounts/users/change_password/', {
+      old_password: oldPassword,
+      new_password: newPassword,
+      new_password_confirm: newPasswordConfirm,
+    });
+  },
+
+  async deactivateAccount(password: string): Promise<void> {
+    await api.post('/accounts/users/deactivate_account/', { password });
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+  },
+
+  async requestPasswordReset(email: string): Promise<void> {
+    await api.post('/accounts/auth/password-reset/', { email });
+  },
+
+  async confirmPasswordReset(
+    uid: string,
+    token: string,
+    newPassword: string,
+    newPasswordConfirm: string
+  ): Promise<void> {
+    await api.post('/accounts/auth/password-reset/confirm/', {
+      uid,
+      token,
+      new_password: newPassword,
+      new_password_confirm: newPasswordConfirm,
+    });
+  },
 };

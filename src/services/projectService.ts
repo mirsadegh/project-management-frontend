@@ -90,8 +90,8 @@ export const projectService = {
   },
 
   async getProjectMembers(slug: string): Promise<ProjectMember[]> {
-    const response = await api.get<Project>(`/projects/projects/${slug}/`);
-    return response.data.members || [];
+    const response = await api.get<ProjectMember[]>(`/projects/projects/${slug}/members/`);
+    return response.data;
   },
 
   async addMember(
@@ -108,5 +108,63 @@ export const projectService = {
 
   async removeMember(slug: string, memberId: number): Promise<void> {
     await api.delete(`/projects/projects/${slug}/remove_member/${memberId}/`);
+  },
+
+  async getStatistics(slug: string): Promise<ProjectStatistics> {
+    const response = await api.get<ProjectStatistics>(`/projects/projects/${slug}/statistics/`);
+    return response.data;
+  },
+
+  async getReports(slug: string): Promise<ProjectReport> {
+    const response = await api.get<ProjectReport>(`/projects/projects/${slug}/reports/`);
+    return response.data;
+  },
+
+  async getTeamInfo(slug: string): Promise<ProjectTeamInfo> {
+    const response = await api.get<ProjectTeamInfo>(`/projects/projects/${slug}/team_info/`);
+    return response.data;
+  },
+
+  async archive(slug: string): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>(`/projects/projects/${slug}/archive/`);
+    return response.data;
+  },
+
+  async closeProject(slug: string): Promise<{ message: string; completed_date: string }> {
+    const response = await api.post<{ message: string; completed_date: string }>(
+      `/projects/projects/${slug}/close_project/`
+    );
+    return response.data;
+  },
+
+  async forceDelete(slug: string): Promise<{ message: string }> {
+    const response = await api.delete<{ message: string }>(`/projects/projects/${slug}/force_delete/`);
+    return response.data;
+  },
+
+  async getComments(slug: string) {
+    const response = await api.get(`/projects/projects/${slug}/comments/`);
+    return response.data;
+  },
+
+  async addComment(slug: string, text: string, parent?: number) {
+    const response = await api.post(`/projects/projects/${slug}/add_comment/`, {
+      text,
+      parent: parent ?? null,
+    });
+    return response.data;
+  },
+
+  async getAttachments(slug: string) {
+    const response = await api.get(`/projects/projects/${slug}/attachments/`);
+    return response.data;
+  },
+
+  async uploadFile(slug: string, file: File, description = '') {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('description', description);
+    const response = await api.post(`/projects/projects/${slug}/upload_file/`, formData);
+    return response.data;
   },
 };
