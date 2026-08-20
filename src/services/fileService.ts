@@ -78,6 +78,7 @@ export const fileService = {
     formData.append('object_id', objectId.toString());
 
     const response = await api.post<Attachment>('/files/attachments/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress: options?.onUploadProgress,
     });
     return response.data;

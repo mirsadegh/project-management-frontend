@@ -63,7 +63,9 @@ const FileUpload = ({ contentType, objectId, onUploadComplete }: FileUploadProps
         '/files/attachments/', // baseURL از api.ts خوانده می‌شود
         formData,
         {
-          // هدر 'Content-Type': 'multipart/form-data' به صورت خودکار توسط axios تنظیم می‌شود
+          // Let the browser set the multipart boundary; we declare the multipart type
+          // explicitly so non-browser runtimes (and our test env) don't fall back to urlencoded.
+          headers: { 'Content-Type': 'multipart/form-data' },
           onUploadProgress: (progressEvent: AxiosProgressEvent) => {
             const percentCompleted = Math.round(
               ((progressEvent.loaded || 0) * 100) / (progressEvent.total || 0)

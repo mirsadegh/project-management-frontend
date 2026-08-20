@@ -189,7 +189,9 @@ export const projectService = {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('description', description);
-    const response = await api.post(`/projects/projects/${slug}/upload_file/`, formData);
+    const response = await api.post(`/projects/projects/${slug}/upload_file/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 };
