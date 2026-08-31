@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './services/contexts/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
@@ -14,6 +15,7 @@ import TeamsList from './components/TeamsList';
 import TeamDetail from './components/TeamDetail';
 import NotificationsList from './components/NotificationsList';
 import EditProject from './components/EditProject';
+import NotFound from './components/NotFound';
 import ProjectSettings from './components/ProjectSettings';
 import './App.css';
 
@@ -88,12 +90,12 @@ const GuestRoute = ({ children }: ProtectedRouteProps) => {
 
   return <>{children}</>;
 };
-
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+      <ErrorBoundary>
+        <AuthProvider>
+          <Routes>
           <Route
             path="/login"
             element={
@@ -191,10 +193,11 @@ function App() {
               </ProtectedRoute>
             }
           />
-          
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
-      </AuthProvider>
+        </AuthProvider>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }
