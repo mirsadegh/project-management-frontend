@@ -2,8 +2,8 @@ import { useState } from 'react';
 import type { ChangeEvent } from 'react';
 import type { AxiosProgressEvent } from 'axios';
 // 1. سرویس api خود را وارد کنید
-import api from '../services/api'; 
-
+import api from '../services/api';
+import type { ApiError } from '../services/types';
 // تعریف تایپ برای پاسخ موفقیت‌آمیز آپلود فایل
 // این تایپ را بر اساس پاسخی که از بک‌اند خود دریافت می‌کنید، ویرایش کنید
 interface UploadResponse {
@@ -84,9 +84,11 @@ const FileUpload = ({ contentType, objectId, onUploadComplete }: FileUploadProps
       
       alert('فایل با موفقیت آپلود شد!');
       
-    } catch (err: any) {
-      // تایپ err به صورت any یا unknown و سپس بررسی آن
-      const errorMessage = err.response?.data?.detail || err.response?.data?.error || 'Upload failed';
+    } catch (err) {
+      // تایپ err به صورت ApiError برای دسترسی امن به response.data
+      const apiErr = err as ApiError;
+      const errorMessage =
+        apiErr.response?.data?.detail || apiErr.response?.data?.error || 'Upload failed';
       setError(errorMessage);
     } finally {
       setUploading(false);

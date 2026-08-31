@@ -1980,3 +1980,131 @@
   margin: 0;
   color: rgba(255, 255, 255, 0.85);
 }
+
+/* Dashboard: clickable stats + empty state */
+.stat-item-link {
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+  transition: background 0.15s ease, transform 0.15s ease;
+  padding: 0.5rem;
+}
+
+.stat-item-link:hover {
+  background: rgba(100, 108, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.stat-item-link:active {
+  transform: translateY(0);
+}
+
+.dashboard-unread-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+  padding: 0.25rem 0;
+}
+
+.dashboard-unread-link:hover {
+  background: rgba(100, 108, 255, 0.12);
+}
+
+.dashboard-empty-card {
+  border-color: rgba(100, 108, 255, 0.4);
+}
+
+.dashboard-empty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.dashboard-empty-row p {
+  margin: 0;
+}
+
+/* Activity feed */
+.activity-feed {
+  margin-top: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  color: white;
+}
+
+.activity-feed h3 {
+  margin: 0 0 1rem;
+  color: white;
+}
+
+.activity-feed-loading,
+.activity-feed-empty {
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.activity-feed-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.activity-feed-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.activity-feed-item:last-child {
+  border-bottom: none;
+}
+
+.activity-feed-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(100, 108, 255, 0.2);
+  color: #646cff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activity-feed-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-feed-description {
+  margin: 0 0 0.25rem;
+  color: rgba(255, 255, 255, 0.95);
+  word-break: break-word;
+}
+
+.activity-feed-meta {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.activity-feed-user {
+  font-weight: 500;
+}
+
+.activity-feed-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}

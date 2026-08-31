@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { projectService, type Project } from '../services/projectService';
 import { getStatusLabel, getPriorityLabel, formatDate } from '../utils/labels';
-
+import type { ApiError } from '../services/types';
 const ProjectsList: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,8 +19,9 @@ const ProjectsList: React.FC = () => {
       setLoading(true);
       const data = await projectService.getProjects();
       setProjects(data);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'بارگذاری پروژه‌ها ناموفق بود');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(apiErr.response?.data?.detail || 'بارگذاری پروژه‌ها ناموفق بود');
     } finally {
       setLoading(false);
     }
@@ -207,8 +208,9 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onCrea
       await projectService.createProject(formData);
       onCreated();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'ایجاد پروژه ناموفق بود');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(apiErr.response?.data?.detail || 'ایجاد پروژه ناموفق بود');
     } finally {
       setLoading(false);
     }

@@ -4,7 +4,7 @@ import { projectService, type Project, type ProjectMember } from '../services/pr
 import { authService } from '../services/authService';
 import { useAuth } from '../services/contexts/AuthContext';
 import { getRoleLabel, getStatusLabel, getPriorityLabel, formatDate } from '../utils/labels';
-
+import type { ApiError } from '../services/types';
 type MemberRole = ProjectMember['role'];
 
 const ProjectDetail: React.FC = () => {
@@ -65,8 +65,8 @@ const ProjectDetail: React.FC = () => {
       setProject(data);
       setMembers(data.members || []);
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'بارگذاری پروژه ناموفق بود');
+      const apiErr = err as ApiError;
+      setError(apiErr.response?.data?.detail || 'بارگذاری پروژه ناموفق بود');
     } finally {
       setLoading(false);
     }
@@ -97,11 +97,14 @@ const ProjectDetail: React.FC = () => {
       setSelectedRole('MEMBER');
       setMemberSuccess(`${newMember.user.full_name || newMember.user.username} به پروژه اضافه شد.`);
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string; user_id?: string[]; role?: string[] } } };
+      const apiErr = err as ApiError;
+      const data = apiErr.response?.data as
+        | { detail?: string; user_id?: string[]; role?: string[] }
+        | undefined;
       setMemberError(
-        error.response?.data?.detail ||
-        error.response?.data?.user_id?.[0] ||
-        error.response?.data?.role?.[0] ||
+        data?.detail ||
+        data?.user_id?.[0] ||
+        data?.role?.[0] ||
         'افزودن عضو ناموفق بود'
       );
     } finally {
@@ -120,8 +123,8 @@ const ProjectDetail: React.FC = () => {
       setMembers((prev) => prev.filter((m) => m.id !== memberId));
       setMemberSuccess('عضو از پروژه حذف شد.');
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      setMemberError(error.response?.data?.detail || 'حذف عضو ناموفق بود');
+      const apiErr = err as ApiError;
+      setMemberError(apiErr.response?.data?.detail || 'حذف عضو ناموفق بود');
     } finally {
       setActionLoading(false);
     }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { notificationService, type Notification } from '../services/notificationService';
+import type { ApiError } from '../services/types';
 
 const NotificationsList: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -17,8 +18,9 @@ const NotificationsList: React.FC = () => {
       const isRead = filter === 'read' ? true : filter === 'unread' ? false : undefined;
       const data = await notificationService.getNotifications({ is_read: isRead });
       setNotifications(data);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'بارگذاری اعلان‌ها ناموفق بود');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(apiErr.response?.data?.detail || 'بارگذاری اعلان‌ها ناموفق بود');
     } finally {
       setLoading(false);
     }
@@ -30,8 +32,8 @@ const NotificationsList: React.FC = () => {
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
       );
-    } catch (err: any) {
-      console.error('Failed to mark notification as read:', err);
+    } catch (err) {
+      console.error('Failed to mark notification as read:', apiErr);
     }
   };
 
@@ -39,10 +41,12 @@ const NotificationsList: React.FC = () => {
     try {
       await notificationService.markAllAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    } catch (err: any) {
-      console.error('Failed to mark all as read:', err);
+    } catch (err) {
+      const apiErr = err as ApiError;
+      console.error('Failed to mark all as read:', apiErr);
     }
   };
+
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
