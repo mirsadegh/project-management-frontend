@@ -18,9 +18,10 @@ interface WebSocketMessage {
 }
 
 const NotificationListener = () => {
-  useEffect(() => {
-    const WS_URL = 'ws://localhost:8000/ws/notifications/';
+    const WS_BASE = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
+    const WS_URL = `${WS_BASE}/ws/notifications/`;
 
+  useEffect(() => {
     // تایپ کردن پارامتر data با استفاده از تایپی که تعریف کردیم
     const handleMessage = (data: WebSocketMessage) => {
       // اگر نوع پیام، نوتیفیکیشن بود

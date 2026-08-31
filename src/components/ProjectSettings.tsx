@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { projectService, type Project } from '../services/projectService';
 import { useAuth } from '../services/contexts/AuthContext';
 import { formatDate } from '../utils/labels';
-
+import type { ApiError } from '../services/types';
 const ProjectSettings: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -34,8 +34,8 @@ const ProjectSettings: React.FC = () => {
       const data = await projectService.getProject(projectSlug);
       setProject(data);
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'بارگذاری پروژه ناموفق بود');
+      const apiErr = err as ApiError;
+      setError(apiErr.response?.data?.detail || 'بارگذاری پروژه ناموفق بود');
     } finally {
       setLoading(false);
     }
@@ -51,8 +51,8 @@ const ProjectSettings: React.FC = () => {
       setProject((prev) => prev ? { ...prev, is_public: !prev.is_public } : null);
       setSuccess(`پروژه اکنون ${!project.is_public ? 'عمومی' : 'خصوصی'} است`);
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'به‌روزرسانی دید ناموفق بود');
+      const apiErr = err as ApiError;
+      setError(apiErr.response?.data?.detail || 'به‌روزرسانی دید ناموفق بود');
     } finally {
       setSaving(false);
     }
@@ -67,8 +67,8 @@ const ProjectSettings: React.FC = () => {
       await projectService.deleteProject(id);
       navigate('/projects');
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'Failed to delete project');
+      const apiErr = err as ApiError;
+      setError(apiErr.response?.data?.detail || 'Failed to delete project');
       setDeleting(false);
       setShowDeleteConfirm(false);
     }

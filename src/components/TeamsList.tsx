@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { teamService, type Team } from '../services/teamService';
-
-type ApiError = {
-  response?: { data?: { detail?: string; name?: string[] } };
-};
+import type { ApiError } from '../services/types';
 
 const getErrorMessage = (err: unknown, fallback: string): string => {
-  const data = (err as ApiError).response?.data;
-  return data?.name?.[0] || data?.detail || fallback;
+  const data = (err as ApiError).response?.data as
+    | { detail?: string; name?: string[] }
+    | undefined;
+  return (data?.name?.[0] ?? data?.detail) ?? fallback;
 };
 
 const TeamsList: React.FC = () => {

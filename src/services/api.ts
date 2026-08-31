@@ -32,6 +32,45 @@ api.interceptors.request.use(
 );
 
 // --- اینترفالر پاسخ (Response Interceptor) ---
+
+let refreshPromise: Promise<string> | null = null;
+
+async function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) throw new Error('No refresh token');
+
+        const { data } = await axios.post<{ access: string; refresh?: string }>(
+          `${API_BASE_URL}/accounts/auth/refresh/`,
+          { refresh: refreshToken }
+        );
+
+        localStorage.setItem('accessToken', data.access);
+
+        // CRITICAL: store rotated refresh token (one-time-use).
+        // The backend's SimpleJWT with ROTATE_REFRESH_TOKENS invalidates
+        // the old refresh token on every successful rotation; ignoring the
+        // new one would force a re-login on the next refresh.
+        if (data.refresh) {
+          localStorage.setItem('refreshToken', data.refresh);
+        }
+
+        return data.access;
+      } catch (error) {
+        // Refresh failed — clear tokens so AuthContext can detect and force logout.
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        throw error;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+  }
+  return refreshPromise;
+}
+
 // این تابع پس از دریافت هر پاسخ اجرا می‌شود
 api.interceptors.response.use(
   // اگر پاسخ موفقیت‌آمیز بود، همان را برگردان
@@ -46,43 +85,16 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true; // جلوگیری از یک حلقه بی‌نهایت از تلاش‌ها
 
-      // بررسی وجود توکن رفرش قبل از تلاش برای رفرش
-      const refreshToken = localStorage.getItem('refreshToken');
-
-      if (!refreshToken) {
-        // اگر توکن رفرش وجود نداشت، توکن‌ها را پاک کن و خطا را برگردان
-        console.error("No refresh token available. User needs to login.");
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        return Promise.reject(error);
-      }
-
       try {
-        // تلاش برای رفرش کردن توکن با استفاده از refresh token
-        const response = await axios.post<{ access: string }>(`${API_BASE_URL}/accounts/auth/refresh/`, {
-          refresh: refreshToken,
-        });
-
-        const { access } = response.data;
-        // ذخیره توکن جدید
-        localStorage.setItem('accessToken', access);
-
-        // تنظیم توکن جدید روی هدر درخواست اصلی
+        const newAccessToken = await refreshAccessToken();
         if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${access}`;
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         }
-
         // ارسال مجدد درخواست اصلی با توکن جدید
         return api(originalRequest);
-
       } catch (refreshError) {
-        // اگر رفرش توکن هم ناموفق بود، توکن‌ها را از حافظه پاک کن
-        console.error("Refresh token failed. Logging out.");
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-
-        // خطای رفرش را به کامپوننت فراخوانی برگردان
-        // کامپوننت می‌تواند با استفاده از AuthContext، کاربر را خارج کرده و به صفحه لاگین ببرد
+        // اگر رفرش توکن هم ناموفق بود، خطای رفرش را به کامپوننت فراخوانی برگردان
+        // AuthContext یا ProtectedRoute هدایت به صفحه ورود را انجام می‌دهند
         return Promise.reject(refreshError);
       }
     }

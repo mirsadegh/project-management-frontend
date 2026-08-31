@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { useAuth } from '../services/contexts/AuthContext';
+import { getErrorMessage } from '../services/types';
+import type { ApiError } from '../services/types';
 
 function getLoginErrorMessage(err: unknown): string {
   if (isAxiosError(err)) {
@@ -35,18 +37,12 @@ function getLoginErrorMessage(err: unknown): string {
       return 'ایمیل یا رمز عبور نادرست است';
     }
 
-    if (typeof data === 'object' && data && typeof data.detail === 'string') {
-      return data.detail;
+    if (status !== undefined) {
+      return `ورود ناموفق بود (خطای ${status}). لطفاً دوباره تلاش کنید.`;
     }
-
-    return `ورود ناموفق بود (خطای ${status}). لطفاً دوباره تلاش کنید.`;
   }
 
-  if (err instanceof Error && err.message) {
-    return err.message;
-  }
-
-  return 'ورود ناموفق بود. لطفاً دوباره تلاش کنید.';
+  return getErrorMessage(err as ApiError) || 'ورود ناموفق بود. لطفاً دوباره تلاش کنید.';
 }
 
 const Login = () => {

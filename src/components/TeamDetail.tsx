@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { teamService, type Team, type TeamMembership } from '../services/teamService';
 import { getRoleLabel } from '../utils/labels';
-
+import type { ApiError } from '../services/types';
 const TeamDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [team, setTeam] = useState<Team | null>(null);
@@ -24,8 +24,9 @@ const TeamDetail: React.FC = () => {
       const membersData = await teamService.getTeamMembers(teamSlug);
       setTeam(teamData);
       setMembers(membersData);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'بارگذاری تیم ناموفق بود');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(apiErr.response?.data?.detail || 'بارگذاری تیم ناموفق بود');
     } finally {
       setLoading(false);
     }

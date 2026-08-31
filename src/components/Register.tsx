@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../services/contexts/AuthContext';
+import { getErrorMessage } from '../services/types';
+import type { ApiError } from '../services/types';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -49,9 +51,9 @@ const Register: React.FC = () => {
         first_name: formData.first_name,
         last_name: formData.last_name,
       });
-      navigate('/dashboard');
-    } catch (err: any) {
-      const data = err.response?.data;
+    } catch (err: unknown) {
+      const apiErr = err as ApiError;
+      const data = apiErr.response?.data;
       if (typeof data === 'string') {
         setError(data);
       } else if (data?.detail) {
@@ -71,9 +73,9 @@ const Register: React.FC = () => {
             const label = fieldNames[field] || field;
             return list.map((msg) => `${label}: ${msg}`);
           });
-        setError(messages.join(' ') || 'ثبت‌نام ناموفق بود. لطفاً دوباره تلاش کنید.');
+        setError(messages.join(' ') || getErrorMessage(apiErr));
       } else {
-        setError('ثبت‌نام ناموفق بود. لطفاً دوباره تلاش کنید.');
+        setError(getErrorMessage(apiErr));
       }
     } finally {
       setLoading(false);

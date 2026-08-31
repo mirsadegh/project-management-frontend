@@ -2,7 +2,9 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './services/contexts/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
@@ -14,6 +16,7 @@ import TeamsList from './components/TeamsList';
 import TeamDetail from './components/TeamDetail';
 import NotificationsList from './components/NotificationsList';
 import EditProject from './components/EditProject';
+import NotFound from './components/NotFound';
 import ProjectSettings from './components/ProjectSettings';
 import './App.css';
 
@@ -89,11 +92,24 @@ const GuestRoute = ({ children }: ProtectedRouteProps) => {
   return <>{children}</>;
 };
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2,
+      gcTime: 1000 * 60 * 10,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <Routes>
           <Route
             path="/login"
             element={
@@ -191,10 +207,12 @@ function App() {
               </ProtectedRoute>
             }
           />
-          
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </AuthProvider>
+          <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

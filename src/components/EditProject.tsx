@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { projectService } from '../services/projectService';
 import { useAuth } from '../services/contexts/AuthContext';
-
+import type { ApiError } from '../services/types';
 const EditProject: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -50,8 +50,8 @@ const EditProject: React.FC = () => {
         status: data.status,
       });
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'بارگذاری پروژه ناموفق بود');
+      const apiErr = err as ApiError;
+      setError(apiErr.response?.data?.detail || 'بارگذاری پروژه ناموفق بود');
     } finally {
       setLoading(false);
     }
@@ -89,8 +89,8 @@ const EditProject: React.FC = () => {
         navigate(`/projects/${id}`);
       }, 800);
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'به‌روزرسانی پروژه ناموفق بود');
+      const apiErr = err as ApiError;
+      setError(apiErr.response?.data?.detail || 'به‌روزرسانی پروژه ناموفق بود');
     } finally {
       setSaving(false);
     }
