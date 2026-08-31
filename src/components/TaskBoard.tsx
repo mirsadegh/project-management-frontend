@@ -4,14 +4,13 @@ import { taskService, type Task, type TaskList } from '../services/taskService';
 import { projectService, type Project } from '../services/projectService';
 import { authService } from '../services/authService';
 import { getPriorityLabel, getTaskStatusLabel, formatDate } from '../utils/labels';
-
-type ApiError = {
-  response?: { data?: { detail?: string; name?: string[]; title?: string[] } };
-};
+import type { ApiError } from '../services/types';
 
 const getErrorMessage = (err: unknown, fallback: string): string => {
-  const data = (err as ApiError).response?.data;
-  return data?.title?.[0] || data?.name?.[0] || data?.detail || fallback;
+  const data = (err as ApiError).response?.data as
+    | { detail?: string; name?: string[]; title?: string[] }
+    | undefined;
+  return (data?.title?.[0] ?? data?.name?.[0] ?? data?.detail) ?? fallback;
 };
 
 const PRIORITIES: Task['priority'][] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];

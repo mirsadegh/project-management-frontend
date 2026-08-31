@@ -1967,3 +1967,16 @@
   justify-content: center;
   flex-wrap: wrap;
 }
+
+.stat-skeleton {
+  display: inline-block;
+  min-width: 2rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+}
+
+.dashboard-unread-count {
+  font-size: 1.05rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+}
