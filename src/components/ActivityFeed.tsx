@@ -1,5 +1,5 @@
 // src/components/ActivityFeed.tsx
-import { Activity as ActivityIcon, Clock } from 'lucide-react';
+import { Activity , Clock } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { activityService } from '../services/activityService';
 
