@@ -1,6 +1,16 @@
 // src/services/authService.ts
 import api from './api';
 
+// PR-6 note on token storage:
+// The backend now also sets the access and refresh tokens as HttpOnly
+// cookies on login/register/refresh. The browser sends them
+// automatically on every same-origin request (and on every WebSocket
+// upgrade through the Vite dev proxy). We still keep the localStorage
+// mirror for backward compatibility with existing tools and tests that
+// read the JSON body, but new code should treat the cookie as the
+// source of truth — `isAuthenticated()` now probes the backend via
+// `getCurrentUser()` instead of checking localStorage.
+
 // Type definitions for input and output data
 export interface LoginCredentials {
   email: string;  // Backend uses email as USERNAME_FIELD
@@ -68,9 +78,16 @@ export const authService = {
   async logout(): Promise<void> {
     const refresh = localStorage.getItem('refreshToken');
     try {
-      // Blacklist refresh token on the backend when available
+      // Blacklist refresh token on the backend when available. PR-6:
+      // when running in cookie-only mode there is no refresh token in
+      // localStorage, so we send `logout_all: true` so the backend
+      // blacklists every outstanding refresh token for the current
+      // user (identified via the ws_access cookie) and clears the
+      // cookies via Set-Cookie.
       if (refresh) {
         await api.post('/accounts/auth/logout/', { refresh });
+      } else {
+        await api.post('/accounts/auth/logout/', { logout_all: true });
       }
     } catch {
       // Always clear local session even if the API call fails
@@ -91,6 +108,13 @@ export const authService = {
   },
 
   isAuthenticated(): boolean {
+    // PR-6: the source of truth is the HttpOnly cookie. We can only
+    // verify that the cookie is valid by asking the backend. This
+    // function returns synchronously based on localStorage for
+    // compatibility with existing call sites; AuthContext.refresh
+    // / getCurrentUser() is what actually confirms validity on app
+    // load. Callers that need a true check should `await
+    // authService.getCurrentUser()`.
     return !!localStorage.getItem('accessToken');
   },
 

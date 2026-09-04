@@ -7,8 +7,17 @@ import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axio
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // ایجاد یک نمونه از axios با تنظیمات پیش‌فرض
+//
+// PR-6: withCredentials=true so the browser includes the auth cookies
+// (`ws_access`, `ws_refresh`) on every request. The cookies are set
+// by the backend's login/register endpoints and are HttpOnly, so
+// JavaScript cannot read them — they are only sent automatically by
+// the browser on same-origin (or Vite-proxied) requests. The Vite
+// dev proxy in `vite.config.ts` makes `/api` and `/ws` same-origin
+// during development.
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },

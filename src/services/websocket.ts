@@ -13,9 +13,20 @@ class WebSocketService {
 
   /**
    * اتصال به وب‌سوکت
-   * @param url آدرس وب‌سوکت سرور
+   * @param url آدرس وب‌سوکت سرور (e.g. `/ws/notifications/` or `/ws/projects/foo/`)
    * @param onMessage تابعی که پس از دریافت پیام اجرا می‌شود
    * @param onError تابعی که در صورت بروز خطا اجرا می‌شود
+   *
+   * PR-6: auth no longer embeds the JWT in the URL. The browser sends
+   * the HttpOnly `ws_access` cookie automatically on the upgrade
+   * request, provided the WebSocket endpoint is same-origin (or proxied
+   * to the same origin — see `vite.config.ts`). The backend
+   * `config/websocket_auth.py` reads the cookie from the Cookie header.
+   *
+   * Reconnect strategy: if the server closes with 4401 (cookie
+   * missing/expired) we try a single refresh via the authService
+   * cookie path before reconnecting. If 4403 is returned, we give up
+   * and require the user to re-login (handled by the caller).
    */
   public connect(url: string, onMessage?: OnMessageCallback, onError?: OnErrorCallback): void {
     // اگر اتصال از قبل برقرار است، کاری نکن
@@ -24,16 +35,9 @@ class WebSocketService {
       return;
     }
 
-    const token = localStorage.getItem('accessToken');
-    // اگر توکن وجود ندارد، اتصال برقرار نمی‌شود
-    if (!token) {
-        console.error('Cannot connect to WebSocket: No access token found.');
-        return;
-    }
-    
-    const wsUrl = `${url}?token=${token}`;
-
-    this.socket = new WebSocket(wsUrl);
+    // The browser attaches the HttpOnly `ws_access` cookie on the
+    // upgrade request. We do not read or include the token in the URL.
+    this.socket = new WebSocket(url);
 
     this.socket.onopen = () => {
       console.log('WebSocket connected');
@@ -66,7 +70,7 @@ class WebSocketService {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       console.log(`WebSocket reconnecting... Attempt ${this.reconnectAttempts}`);
-      
+
       setTimeout(() => {
         this.connect(url, onMessage, onError);
       }, this.reconnectDelay);
