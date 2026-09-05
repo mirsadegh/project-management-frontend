@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../services/contexts/AuthContext';
 import { getErrorMessage } from '../services/types';
 import type { ApiError } from '../services/types';
 
 const Register: React.FC = () => {
-  const navigate = useNavigate();
   const { register } = useAuth();
   const [formData, setFormData] = useState({
     username: '',

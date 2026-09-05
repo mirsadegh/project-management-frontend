@@ -25,18 +25,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    // Security fix (C-4): there is no localStorage token to peek at
+    // anymore. The HttpOnly cookie is the only auth artifact, and the
+    // only way to validate it is to call the backend. We always call
+    // /accounts/users/me/ on mount — a 2xx means we're authenticated,
+    // a 401 means we aren't. The backend sends the cookie
+    // automatically; we don't read it.
     const initializeAuth = async () => {
-      if (authService.isAuthenticated()) {
-        try {
-          const userData = await authService.getCurrentUser();
-          setUser(userData);
-        } catch (error) {
-          // اگر گرفتن کاربر با خطا مواجه شد، توکن نامعتبر است و باید خارج شویم
-          authService.logout();
-        } finally {
-          setLoading(false);
-        }
-      } else {
+      try {
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
+      } catch {
+        // Not authenticated or cookie expired; user stays null.
+        setUser(null);
+      } finally {
         setLoading(false);
       }
     };
@@ -58,7 +60,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const register = async (userData: RegisterData) => {
     await authService.register(userData);
-    // Tokens are stored by authService; load profile for authenticated state
+    // The backend sets the auth cookies on the register response, so
+    // we can immediately load the profile. No localStorage read/write.
     const userDataProfile = await authService.getCurrentUser();
     setUser(userDataProfile);
   };

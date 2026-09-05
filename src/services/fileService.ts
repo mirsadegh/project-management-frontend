@@ -103,9 +103,13 @@ export const fileService = {
   },
 
   getPreviewUrl(fileId: number): string {
-    const token = localStorage.getItem('accessToken');
+    // Security fix (C-1): PR-6 made the HttpOnly `ws_access` cookie the
+    // source of truth. The browser attaches it automatically on same-origin
+    // <img src> requests (Vite dev proxy in dev, reverse proxy in prod), so
+    // the JWT must NOT be embedded in the URL — it leaks via Referer,
+    // browser history, and intermediate proxy logs.
     const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/?$/, '') || 'http://localhost:8000';
-    return `${baseUrl}/api/files/attachments/${fileId}/preview/?token=${token ?? ''}`;
+    return `${baseUrl}/api/files/attachments/${fileId}/preview/`;
   },
 
   async deleteAttachment(fileId: number): Promise<void> {

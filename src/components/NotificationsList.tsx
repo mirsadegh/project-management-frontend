@@ -33,7 +33,7 @@ const NotificationsList: React.FC = () => {
         prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
       );
     } catch (err) {
-      console.error('Failed to mark notification as read:', apiErr);
+      console.error('Failed to mark notification as read:', err);
     }
   };
 

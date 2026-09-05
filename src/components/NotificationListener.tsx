@@ -51,7 +51,12 @@ const NotificationListener = () => {
     };
 
     // اتصال به وب‌سوکت
-    websocketService.connect(WS_URL, handleMessage, handleError);
+    // The websocket service types incoming data as `unknown` and the
+    // error as `Event | Error` (C-5); we narrow both back to the
+    // shapes this component expects.
+    const onWsMessage = (data: unknown) => handleMessage(data as WebSocketMessage);
+    const onWsError = (error: Event | Error) => handleError(error as Event);
+    websocketService.connect(WS_URL, onWsMessage, onWsError);
 
     // پاکسازی و قطع اتصال هنگام unmount شدن کامپوننت
     return () => {

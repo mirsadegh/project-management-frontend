@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FileText, Download, Eye, Trash2 } from 'lucide-react';
 // 1. سرویس api خود را وارد کنید
 import api from '../services/api';
+import { fileService } from '../services/fileService';
 import { formatDate } from '../utils/labels';
 
 // 2. تعریف تایپ‌ها برای داده‌ها
@@ -80,12 +81,10 @@ const FileList = ({ contentType, objectId }: FileListProps) => {
   };
 
   const handlePreview = (fileId: number): void => {
-    // برای پیش‌نمایش، توکن را به صورت query string ارسال می‌کنیم
-    // این روش به بک‌اند شما بستگی دارد، اما یک روش رایج است
-    const token = localStorage.getItem('accessToken');
-    const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:8000';
-    const url = `${baseUrl}/api/files/attachments/${fileId}/preview/?token=${token}`;
-    window.open(url, '_blank');
+    // Security fix (C-1): the HttpOnly ws_access cookie is sent
+    // automatically on the preview request; the JWT must NOT be in
+    // the URL. See fileService.getPreviewUrl.
+    window.open(fileService.getPreviewUrl(fileId), '_blank');
   };
 
   const handleDelete = async (fileId: number): Promise<void> => {
