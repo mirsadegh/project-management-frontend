@@ -1,24 +1,42 @@
 // src/App.tsx
-import { useState } from 'react';
+//
+// Route-level code splitting: every page component is loaded via
+// `React.lazy`, and the entire <Routes> is wrapped in a single
+// <Suspense> boundary that shows a `PageSkeleton` while the chunk
+// is being fetched. This keeps the initial JS bundle small
+// (the route components are the heaviest pieces after the framework
+// and the QueryClient).
+//
+// ErrorBoundary stays OUTSIDE Suspense so a chunk-load failure (or any
+// render error inside a lazy component) is caught by the class
+// boundary and presented to the user, rather than crashing the app
+// silently.
+import { useState, lazy, Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './services/contexts/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
-import Login from './components/Login';
-import Register from './components/Register';
-import Dashboard from './components/Dashboard';
-import Profile from './components/Profile';
-import ProjectsList from './components/ProjectsList';
-import ProjectDetail from './components/ProjectDetail';
-import TaskBoard from './components/TaskBoard';
-import TeamsList from './components/TeamsList';
-import TeamDetail from './components/TeamDetail';
-import NotificationsList from './components/NotificationsList';
-import EditProject from './components/EditProject';
-import NotFound from './components/NotFound';
-import ProjectSettings from './components/ProjectSettings';
+import PageSkeleton from './components/common/PageSkeleton';
 import './App.css';
+
+// Lazy-loaded route components. All export `default` so the simple
+// `lazy(() => import(...))` form is correct; if a future component
+// switches to a named export, use the `.then(m => ({ default: m.X }))`
+// form instead.
+const Login = lazy(() => import('./components/Login'));
+const Register = lazy(() => import('./components/Register'));
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const Profile = lazy(() => import('./components/Profile'));
+const ProjectsList = lazy(() => import('./components/ProjectsList'));
+const ProjectDetail = lazy(() => import('./components/ProjectDetail'));
+const TaskBoard = lazy(() => import('./components/TaskBoard'));
+const EditProject = lazy(() => import('./components/EditProject'));
+const ProjectSettings = lazy(() => import('./components/ProjectSettings'));
+const TeamsList = lazy(() => import('./components/TeamsList'));
+const TeamDetail = lazy(() => import('./components/TeamDetail'));
+const NotificationsList = lazy(() => import('./components/NotificationsList'));
+const NotFound = lazy(() => import('./components/NotFound'));
 
 // Type for ProtectedRoute props
 interface ProtectedRouteProps {
@@ -109,7 +127,8 @@ function App() {
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <Routes>
+            <Suspense fallback={<PageSkeleton />}>
+              <Routes>
           <Route
             path="/login"
             element={
@@ -209,7 +228,8 @@ function App() {
           />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<NotFound />} />
-            </Routes>
+              </Routes>
+            </Suspense>
           </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>
