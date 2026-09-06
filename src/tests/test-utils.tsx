@@ -48,6 +48,7 @@ const customRender = (
           { path: 'login', element: ui },
           { path: 'register', element: ui },
           { path: 'profile', element: ui },
+          { path: 'notifications', element: ui },
           { path: '*', element: ui },
         ],
       },
