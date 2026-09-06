@@ -7,6 +7,15 @@ export const mockUser = {
   email: 'test@example.com',
   first_name: 'Test',
   last_name: 'User',
+  full_name: 'Test User',
+  role: 'DEV',
+};
+
+export const mockUserSummary = {
+  id: 1,
+  username: 'testuser',
+  email: 'test@example.com',
+  full_name: 'Test User',
   role: 'DEV',
 };
 
@@ -38,6 +47,57 @@ export const mockProject = {
   status: 'ACTIVE',
   owner: mockUser,
 };
+
+export const mockProjects = [
+  {
+    id: 1,
+    name: 'پروژه اول',
+    slug: 'porojekt-avval',
+    description: 'توضیحات پروژه اول',
+    owner: mockUserSummary,
+    manager: mockUserSummary,
+    status: 'IN_PROGRESS' as const,
+    priority: 'HIGH' as const,
+    progress: 50,
+    start_date: '2024-01-01',
+    due_date: '2024-06-01',
+    completed_date: null,
+    budget: null,
+    is_active: true,
+    is_public: false,
+    is_overdue: false,
+    total_tasks: 10,
+    completed_tasks: 5,
+    comment_count: 3,
+    attachment_count: 2,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 2,
+    name: 'پروژه دوم',
+    slug: 'porojekt-dovvom',
+    description: 'توضیحات پروژه دوم',
+    owner: mockUserSummary,
+    manager: null,
+    status: 'COMPLETED' as const,
+    priority: 'LOW' as const,
+    progress: 100,
+    start_date: '2024-02-01',
+    due_date: '2024-07-01',
+    completed_date: '2024-06-30',
+    budget: null,
+    is_active: false,
+    is_public: false,
+    is_overdue: false,
+    total_tasks: 5,
+    completed_tasks: 5,
+    comment_count: 1,
+    attachment_count: 0,
+    created_at: '2024-02-01T00:00:00Z',
+    updated_at: '2024-06-30T00:00:00Z',
+  },
+];
 
 export const mockTask = {
   id: 1,
