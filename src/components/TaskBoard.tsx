@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { taskService, type Task, type TaskList } from '../services/taskService';
 import { projectService, type Project } from '../services/projectService';
 import { authService } from '../services/authService';
 import { getPriorityLabel, getTaskStatusLabel, formatDate } from '../utils/labels';
 import type { ApiError } from '../services/types';
+import { toast } from 'react-toastify';
+
+const PRIORITIES: Task['priority'][] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+const STATUSES: Task['status'][] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'COMPLETED', 'BLOCKED'];
 
 const getErrorMessage = (err: unknown, fallback: string): string => {
   const data = (err as ApiError).response?.data as
@@ -13,9 +18,6 @@ const getErrorMessage = (err: unknown, fallback: string): string => {
   return (data?.title?.[0] ?? data?.name?.[0] ?? data?.detail) ?? fallback;
 };
 
-const PRIORITIES: Task['priority'][] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
-const STATUSES: Task['status'][] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'COMPLETED', 'BLOCKED'];
-
 const TaskBoard: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [taskLists, setTaskLists] = useState<TaskList[]>([]);
@@ -23,12 +25,21 @@ const TaskBoard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // List form state
   const [showListForm, setShowListForm] = useState(false);
   const [listName, setListName] = useState('');
   const [listDesc, setListDesc] = useState('');
   const [creatingList, setCreatingList] = useState(false);
   const [listError, setListError] = useState<string | null>(null);
 
+  // Edit list modal state
+  const [editingList, setEditingList] = useState<TaskList | null>(null);
+  const [editListName, setEditListName] = useState('');
+  const [editListDesc, setEditListDesc] = useState('');
+  const [updatingList, setUpdatingList] = useState(false);
+  const [editListError, setEditListError] = useState<string | null>(null);
+
+  // Task modal state
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [users, setUsers] = useState<Array<{ id: number; username: string; full_name: string }>>([]);
   const [taskForm, setTaskForm] = useState({
@@ -43,18 +54,29 @@ const TaskBoard: React.FC = () => {
   const [creatingTask, setCreatingTask] = useState(false);
   const [taskError, setTaskError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (projectId) {
-      loadProjectAndTasks(projectId);
-    }
-  }, [projectId]);
+  // Edit task modal state
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editTaskForm, setEditTaskForm] = useState({
+    title: '',
+    description: '',
+    priority: 'MEDIUM' as Task['priority'],
+    status: 'TODO' as Task['status'],
+    due_date: '',
+    assignee_id: '' as number | '',
+  });
+  const [updatingTask, setUpdatingTask] = useState(false);
+  const [editTaskError, setEditTaskError] = useState<string | null>(null);
+
+  // Delete confirmation state
+  const [confirmDelete, setConfirmDelete] = useState<{ type: 'task' | 'list'; id: number; name: string } | null>(null);
+
+  // ─── Mutations ───────────────────────────────────────────────────────────────
 
   const loadProjectAndTasks = async (projectSlug: string) => {
     try {
       setLoading(true);
       const projectData = await projectService.getProject(projectSlug);
       setProject(projectData);
-
       const taskListsData = await taskService.getTaskLists(projectData.id);
       setTaskLists(taskListsData);
     } catch (err) {
@@ -64,15 +86,65 @@ const TaskBoard: React.FC = () => {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'LOW': return '#10b981';
-      case 'MEDIUM': return '#f59e0b';
-      case 'HIGH': return '#f97316';
-      case 'URGENT': return '#ef4444';
-      default: return '#6b7280';
+  const deleteListMutation = useMutation({
+    mutationFn: (listId: number) => taskService.deleteTaskList(listId),
+    onSuccess: async () => {
+      setConfirmDelete(null);
+      toast.success('لیست وظایف حذف شد');
+      await loadProjectAndTasks(projectId!);
+    },
+    onError: (err: ApiError) => {
+      toast.error(getErrorMessage(err, 'حذف لیست ناموفق بود'));
+    },
+  });
+
+  const updateListMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { name: string; description?: string } }) =>
+      taskService.updateTaskList(id, data),
+    onSuccess: async () => {
+      setEditingList(null);
+      toast.success('لیست وظایف ویرایش شد');
+      await loadProjectAndTasks(projectId!);
+    },
+    onError: (err: ApiError) => {
+      setEditListError(getErrorMessage(err, 'ویرایش لیست ناموفق بود'));
+    },
+  });
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: (taskId: number) => taskService.deleteTask(taskId),
+    onSuccess: async () => {
+      setConfirmDelete(null);
+      toast.success('وظیفه حذف شد');
+      await loadProjectAndTasks(projectId!);
+    },
+    onError: (err: ApiError) => {
+      toast.error(getErrorMessage(err, 'حذف وظیفه ناموفق بود'));
+    },
+  });
+
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Task> }) =>
+      taskService.updateTask(id, data),
+    onSuccess: async () => {
+      setEditingTask(null);
+      toast.success('وظیفه ویرایش شد');
+      await loadProjectAndTasks(projectId!);
+    },
+    onError: (err: ApiError) => {
+      setEditTaskError(getErrorMessage(err, 'ویرایش وظیفه ناموفق بود'));
+    },
+  });
+
+  // ─── Effects ────────────────────────────────────────────────────────────────
+
+  React.useEffect(() => {
+    if (projectId) {
+      loadProjectAndTasks(projectId);
     }
-  };
+  }, [projectId]);
+
+  // ─── Handlers ─────────────────────────────────────────────────────────────
 
   const openListForm = () => {
     setListName('');
@@ -87,7 +159,6 @@ const TaskBoard: React.FC = () => {
       setListError('نام لیست الزامی است');
       return;
     }
-
     setCreatingList(true);
     setListError(null);
     try {
@@ -99,6 +170,40 @@ const TaskBoard: React.FC = () => {
     } finally {
       setCreatingList(false);
     }
+  };
+
+  const openEditListModal = (list: TaskList) => {
+    setEditingList(list);
+    setEditListName(list.name);
+    setEditListDesc(list.description || '');
+    setEditListError(null);
+  };
+
+  const handleUpdateList = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingList || !editListName.trim()) {
+      setEditListError('نام لیست الزامی است');
+      return;
+    }
+    setUpdatingList(true);
+    setEditListError(null);
+    try {
+      await updateListMutation.mutateAsync({
+        id: editingList.id,
+        data: { name: editListName.trim(), description: editListDesc.trim() || undefined },
+      });
+    } finally {
+      setUpdatingList(false);
+    }
+  };
+
+  const handleDeleteList = (list: TaskList) => {
+    setConfirmDelete({ type: 'list', id: list.id, name: list.name });
+  };
+
+  const confirmDeleteList = async () => {
+    if (!confirmDelete || confirmDelete.type !== 'list') return;
+    await deleteListMutation.mutateAsync(confirmDelete.id);
   };
 
   const openTaskModal = async (presetListId?: number) => {
@@ -135,7 +240,6 @@ const TaskBoard: React.FC = () => {
       setTaskError('لطفاً یک لیست وظایف انتخاب کنید');
       return;
     }
-
     setCreatingTask(true);
     setTaskError(null);
     try {
@@ -158,6 +262,73 @@ const TaskBoard: React.FC = () => {
     }
   };
 
+  const openEditTaskModal = async (task: Task) => {
+    setEditingTask(task);
+    setEditTaskForm({
+      title: task.title,
+      description: task.description || '',
+      priority: task.priority,
+      status: task.status,
+      due_date: task.due_date || '',
+      assignee_id: task.assignee?.id ?? '',
+    });
+    setEditTaskError(null);
+    try {
+      const data = await authService.getUsers();
+      setUsers(data);
+    } catch {
+      setUsers([]);
+    }
+  };
+
+  const handleUpdateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTask || !editTaskForm.title.trim()) {
+      setEditTaskError('عنوان وظیفه الزامی است');
+      return;
+    }
+    setUpdatingTask(true);
+    setEditTaskError(null);
+    try {
+      await updateTaskMutation.mutateAsync({
+        id: editingTask.id,
+        data: {
+          title: editTaskForm.title.trim(),
+          description: editTaskForm.description.trim() || undefined,
+          priority: editTaskForm.priority,
+          status: editTaskForm.status,
+          due_date: editTaskForm.due_date || null,
+          assignee_id: editTaskForm.assignee_id === '' ? null : Number(editTaskForm.assignee_id),
+        },
+      });
+    } finally {
+      setUpdatingTask(false);
+    }
+  };
+
+  const handleDeleteTask = (task: Task) => {
+    setConfirmDelete({ type: 'task', id: task.id, name: task.title });
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!confirmDelete || confirmDelete.type !== 'task') return;
+    await deleteTaskMutation.mutateAsync(confirmDelete.id);
+  };
+
+  // ─── Priority colour helper ────────────────────────────────────────────────
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'LOW': return '#10b981';
+      case 'MEDIUM': return '#f59e0b';
+      case 'HIGH': return '#f97316';
+      case 'URGENT': return '#ef4444';
+      default: return '#6b7280';
+    }
+  };
+
+  // ─── Render ────────────────────────────────────────────────────────────────
+
   if (loading) {
     return <div className="page-loading">در حال بارگذاری بورد وظایف...</div>;
   }
@@ -178,6 +349,7 @@ const TaskBoard: React.FC = () => {
         </div>
       </div>
 
+      {/* Create list form */}
       {showListForm && (
         <form className="create-list-form" onSubmit={handleCreateList}>
           {listError && <div className="error-message">{listError}</div>}
@@ -211,6 +383,7 @@ const TaskBoard: React.FC = () => {
         </form>
       )}
 
+      {/* Task board */}
       {taskLists.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📋</div>
@@ -222,15 +395,62 @@ const TaskBoard: React.FC = () => {
         <div className="task-board">
           {taskLists.map((list) => (
             <div key={list.id} className="task-column">
+              {/* Column header with edit/delete actions */}
               <div className="column-header">
-                <h3>{list.name}</h3>
-                <span className="task-count">{list.tasks?.length || 0}</span>
+                <div className="column-title-row">
+                  <h3>{list.name}</h3>
+                  <span className="task-count">{list.tasks?.length || 0}</span>
+                </div>
+                <div className="column-actions">
+                  <button
+                    className="icon-btn"
+                    title="ویرایش لیست"
+                    aria-label="ویرایش لیست"
+                    onClick={() => openEditListModal(list)}
+                    disabled={!!editingList}
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    className="icon-btn"
+                    title="حذف لیست"
+                    aria-label="حذف لیست"
+                    onClick={() => handleDeleteList(list)}
+                    disabled={deleteListMutation.isPending}
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
+
+              {/* Task cards */}
               <div className="task-list">
                 {list.tasks?.map((task) => (
                   <div key={task.id} className="task-card">
                     <div className="task-card-header">
                       <h4 className="task-card-title">{task.title}</h4>
+                      <div className="task-card-actions">
+                        <button
+                          className="icon-btn icon-btn-sm"
+                          title="ویرایش وظیفه"
+                          aria-label="ویرایش وظیفه"
+                          onClick={() => openEditTaskModal(task)}
+                          disabled={!!editingTask}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="icon-btn icon-btn-sm"
+                          title="حذف وظیفه"
+                          aria-label="حذف وظیفه"
+                          onClick={() => handleDeleteTask(task)}
+                          disabled={deleteTaskMutation.isPending}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                    <div className="task-card-priority">
                       <span
                         className="task-priority"
                         style={{ backgroundColor: getPriorityColor(task.priority) }}
@@ -266,6 +486,7 @@ const TaskBoard: React.FC = () => {
         </div>
       )}
 
+      {/* Create task modal */}
       {showTaskModal && (
         <div className="modal-overlay" onClick={() => setShowTaskModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -363,6 +584,162 @@ const TaskBoard: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit list modal */}
+      {editingList && (
+        <div className="modal-overlay" onClick={() => setEditingList(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>ویرایش لیست وظایف</h3>
+            {editListError && <div className="error-message">{editListError}</div>}
+            <form onSubmit={handleUpdateList}>
+              <div className="form-group">
+                <label>نام لیست *</label>
+                <input
+                  type="text"
+                  value={editListName}
+                  onChange={(e) => setEditListName(e.target.value)}
+                  placeholder="نام لیست"
+                  required
+                  disabled={updatingList}
+                />
+              </div>
+              <div className="form-group">
+                <label>توضیحات (اختیاری)</label>
+                <input
+                  type="text"
+                  value={editListDesc}
+                  onChange={(e) => setEditListDesc(e.target.value)}
+                  disabled={updatingList}
+                />
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn-secondary" onClick={() => setEditingList(null)} disabled={updatingList}>
+                  انصراف
+                </button>
+                <button type="submit" className="btn-primary" disabled={updatingList}>
+                  {updatingList ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit task modal */}
+      {editingTask && (
+        <div className="modal-overlay" onClick={() => setEditingTask(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>ویرایش وظیفه</h3>
+            {editTaskError && <div className="error-message">{editTaskError}</div>}
+            <form onSubmit={handleUpdateTask}>
+              <div className="form-group">
+                <label>عنوان *</label>
+                <input
+                  type="text"
+                  value={editTaskForm.title}
+                  onChange={(e) => setEditTaskForm({ ...editTaskForm, title: e.target.value })}
+                  placeholder="عنوان وظیفه"
+                  required
+                  disabled={updatingTask}
+                />
+              </div>
+              <div className="form-group">
+                <label>توضیحات</label>
+                <textarea
+                  value={editTaskForm.description}
+                  onChange={(e) => setEditTaskForm({ ...editTaskForm, description: e.target.value })}
+                  disabled={updatingTask}
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>اولویت</label>
+                  <select
+                    value={editTaskForm.priority}
+                    onChange={(e) => setEditTaskForm({ ...editTaskForm, priority: e.target.value as Task['priority'] })}
+                    disabled={updatingTask}
+                  >
+                    {PRIORITIES.map((p) => (
+                      <option key={p} value={p}>{getPriorityLabel(p)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>وضعیت</label>
+                  <select
+                    value={editTaskForm.status}
+                    onChange={(e) => setEditTaskForm({ ...editTaskForm, status: e.target.value as Task['status'] })}
+                    disabled={updatingTask}
+                  >
+                    {STATUSES.map((s) => (
+                      <option key={s} value={s}>{getTaskStatusLabel(s)}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>مهلت</label>
+                  <input
+                    type="date"
+                    value={editTaskForm.due_date}
+                    onChange={(e) => setEditTaskForm({ ...editTaskForm, due_date: e.target.value })}
+                    disabled={updatingTask}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>مسئول (اختیاری)</label>
+                  <select
+                    value={editTaskForm.assignee_id}
+                    onChange={(e) => setEditTaskForm({ ...editTaskForm, assignee_id: e.target.value === '' ? '' : Number(e.target.value) })}
+                    disabled={updatingTask}
+                  >
+                    <option value="">بدون مسئول</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>{u.full_name || u.username}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn-secondary" onClick={() => setEditingTask(null)} disabled={updatingTask}>
+                  انصراف
+                </button>
+                <button type="submit" className="btn-primary" disabled={updatingTask}>
+                  {updatingTask ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {confirmDelete && (
+        <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>تأیید حذف</h3>
+            <p>
+              {confirmDelete.type === 'list'
+                ? `آیا از حذف لیست «${confirmDelete.name}» مطمئن هستید؟ تمام وظایف داخل این لیست نیز حذف خواهند شد.`
+                : `آیا از حذف وظیفه «${confirmDelete.name}» مطمئن هستید؟`}
+            </p>
+            <div className="form-actions">
+              <button type="button" className="btn-secondary" onClick={() => setConfirmDelete(null)}>
+                انصراف
+              </button>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={confirmDelete.type === 'list' ? confirmDeleteList : confirmDeleteTask}
+                disabled={deleteListMutation.isPending || deleteTaskMutation.isPending}
+              >
+                {deleteListMutation.isPending || deleteTaskMutation.isPending ? 'در حال حذف...' : 'حذف'}
+              </button>
+            </div>
           </div>
         </div>
       )}
