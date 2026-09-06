@@ -39,7 +39,7 @@ describe('Login Component', () => {
   });
 
   it('renders login form correctly', () => {
-    render(<Login />);
+    render(<Login />, { route: '/login' });
 
     expect(screen.getByRole('heading', { name: 'خوش آمدید' })).toBeInTheDocument();
     expect(screen.getByPlaceholderText('ایمیل')).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('Login Component', () => {
       loading: false,
     });
 
-    render(<Login />);
+    render(<Login />, { route: '/login' });
 
     fireEvent.change(screen.getByPlaceholderText('ایمیل'), {
       target: { value: mockLoginCredentials.email },
@@ -97,7 +97,7 @@ describe('Login Component', () => {
       loading: false,
     });
 
-    render(<Login />);
+    render(<Login />, { route: '/login' });
 
     fireEvent.change(screen.getByPlaceholderText('ایمیل'), {
       target: { value: mockLoginCredentials.email },
@@ -124,7 +124,7 @@ describe('Login Component', () => {
       loading: false,
     });
 
-    render(<Login />);
+    render(<Login />, { route: '/login' });
 
     fireEvent.change(screen.getByPlaceholderText('ایمیل'), {
       target: { value: mockLoginCredentials.email },
@@ -146,7 +146,7 @@ describe('Login Component', () => {
   });
 
   it('validates email and password fields', async () => {
-    render(<Login />);
+    render(<Login />, { route: '/login' });
 
     fireEvent.click(screen.getByRole('button', { name: 'ورود' }));
 

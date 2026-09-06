@@ -95,7 +95,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       expect(screen.getByText('در حال بارگذاری پروژه‌ها...')).toBeInTheDocument();
     });
@@ -110,7 +110,7 @@ describe('ProjectsList', () => {
         error: { response: { data: { detail: 'خطای سرور' } } },
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       expect(screen.getByText(/خطای سرور/i)).toBeInTheDocument();
     });
@@ -125,7 +125,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       expect(screen.getByText(/هنوز پروژه‌ای وجود ندارد/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /ایجاد پروژه/i })).toBeInTheDocument();
@@ -141,7 +141,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => {
         // Use getAllByText because project names appear in both the h3 and the link text
@@ -158,7 +158,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => {
         const firstLink = screen.getByRole('link', { name: /پروژه اول/i });
@@ -174,7 +174,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => {
         // Use regex to match the Persian percent character (U+066A) rendered by the component
@@ -191,7 +191,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => {
         // First project: 5 completed out of 10 total
@@ -214,7 +214,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => {
         expect(screen.getByText('توضیحات پروژه اول')).toBeInTheDocument();
@@ -230,7 +230,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => {
         expect(screen.getByText('در حال انجام')).toBeInTheDocument();
@@ -250,7 +250,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => {
         expect(screen.getByText('پروژه اول')).toBeInTheDocument();
@@ -273,7 +273,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => screen.getByText('پروژه اول'));
 
@@ -294,7 +294,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => screen.getByText('پروژه اول'));
 
@@ -317,7 +317,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => screen.getByText('پروژه اول'));
 
@@ -336,7 +336,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => screen.getByText('پروژه اول'));
 
@@ -358,7 +358,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => screen.getByText('پروژه اول'));
       await user.click(screen.getByRole('button', { name: /پروژه جدید/i }));
@@ -384,7 +384,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => screen.getByText('پروژه اول'));
       await user.click(screen.getByRole('button', { name: /پروژه جدید/i }));
@@ -406,7 +406,7 @@ describe('ProjectsList', () => {
         error: null,
       } as ReturnType<typeof useProjects>);
 
-      render(<ProjectsList />);
+      render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => screen.getByText('پروژه اول'));
       await user.click(screen.getByRole('button', { name: /پروژه جدید/i }));

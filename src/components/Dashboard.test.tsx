@@ -191,7 +191,7 @@ describe('Dashboard', () => {
         error: null,
       } as ReturnType<typeof useUnreadCount>);
 
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       // The dashboard always renders the header and profile card
       expect(screen.getByText('داشبورد')).toBeInTheDocument();
@@ -228,7 +228,7 @@ describe('Dashboard', () => {
         error: null,
       } as ReturnType<typeof useUnreadCount>);
 
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       // Dashboard renders even on error — error would show in the projects card section
       expect(screen.getByText('داشبورد')).toBeInTheDocument();
@@ -262,7 +262,7 @@ describe('Dashboard', () => {
         error: null,
       } as ReturnType<typeof useUnreadCount>);
 
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       // Empty state: "شروع کنید" card appears when any section is empty
       expect(screen.getByText('شروع کنید')).toBeInTheDocument();
@@ -300,7 +300,7 @@ describe('Dashboard', () => {
     });
 
     it('displays the dashboard heading and user welcome message', async () => {
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         expect(screen.getByText('داشبورد')).toBeInTheDocument();
@@ -309,7 +309,7 @@ describe('Dashboard', () => {
     });
 
     it('displays the user profile card with name and role', async () => {
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         expect(screen.getByText('پروفایل شما')).toBeInTheDocument();
@@ -318,7 +318,7 @@ describe('Dashboard', () => {
     });
 
     it('displays quick stats with correct project count', async () => {
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         // "پروژه‌ها" label appears in links
@@ -330,7 +330,7 @@ describe('Dashboard', () => {
     });
 
     it('displays task counts in stats', async () => {
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         // Persian numeral ۳ (3 tasks total)
@@ -341,7 +341,7 @@ describe('Dashboard', () => {
     });
 
     it('displays team count in stats', async () => {
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         // Persian numeral ۲ (2 teams)
@@ -351,7 +351,7 @@ describe('Dashboard', () => {
     });
 
     it('displays unread notifications count', async () => {
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         expect(screen.getByText(/۳ اعلان جدید/)).toBeInTheDocument();
@@ -359,7 +359,7 @@ describe('Dashboard', () => {
     });
 
     it('displays account status section', async () => {
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         expect(screen.getByText('وضعیت حساب')).toBeInTheDocument();
@@ -368,7 +368,7 @@ describe('Dashboard', () => {
     });
 
     it('displays notification badge with correct text', async () => {
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         // Persian numeral ۳ followed by "اعلان جدید"
@@ -377,7 +377,7 @@ describe('Dashboard', () => {
     });
 
     it('shows activity feed mock', async () => {
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         expect(screen.getByTestId('activity-feed-mock')).toBeInTheDocument();
@@ -414,7 +414,7 @@ describe('Dashboard', () => {
     });
 
     it('stat items are links to correct pages', async () => {
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         const projectLinks = screen.getAllByRole('link', { name: /پروژه‌ها/i });
@@ -432,7 +432,7 @@ describe('Dashboard', () => {
     });
 
     it('unread notifications link navigates to notifications page', async () => {
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         const notificationLink = screen.getByRole('link', { name: /اعلان/ });
@@ -468,7 +468,7 @@ describe('Dashboard', () => {
         error: null,
       } as ReturnType<typeof useUnreadCount>);
 
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       // Projects stat shows skeleton
       await waitFor(() => {
@@ -508,7 +508,7 @@ describe('Dashboard', () => {
         error: null,
       } as ReturnType<typeof useUnreadCount>);
 
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         expect(screen.getByText('اعلان جدیدی ندارید')).toBeInTheDocument();
@@ -541,7 +541,7 @@ describe('Dashboard', () => {
         error: null,
       } as ReturnType<typeof useUnreadCount>);
 
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         // Skeleton shows "..." while loading
@@ -575,7 +575,7 @@ describe('Dashboard', () => {
         error: null,
       } as ReturnType<typeof useUnreadCount>);
 
-      render(<Dashboard />);
+      render(<Dashboard />, { route: '/dashboard' });
 
       await waitFor(() => {
         expect(screen.getByText('شروع کنید')).toBeInTheDocument();

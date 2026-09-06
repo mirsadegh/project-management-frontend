@@ -38,7 +38,8 @@ describe('FileUpload Component', () => {
 
   it('renders file upload component', () => {
     const { container } = render(
-      <FileUpload contentType="task" objectId={1} onUploadComplete={() => {}} />
+      <FileUpload contentType="task" objectId={1} onUploadComplete={() => {}} />,
+      { route: '/projects/1/files' }
     );
 
     expect(screen.getByText('آپلود فایل')).toBeInTheDocument();
@@ -46,7 +47,10 @@ describe('FileUpload Component', () => {
   });
 
   it('disables upload button when no files are selected', () => {
-    render(<FileUpload contentType="task" objectId={1} onUploadComplete={() => {}} />);
+    render(
+      <FileUpload contentType="task" objectId={1} onUploadComplete={() => {}} />,
+      { route: '/projects/1/files' }
+    );
 
     const uploadButton = screen.getByRole('button', { name: 'آپلود' });
     expect(uploadButton).toBeDisabled();
@@ -54,7 +58,8 @@ describe('FileUpload Component', () => {
 
   it('enables upload button when a file is selected', () => {
     const { container } = render(
-      <FileUpload contentType="task" objectId={1} onUploadComplete={() => {}} />
+      <FileUpload contentType="task" objectId={1} onUploadComplete={() => {}} />,
+      { route: '/projects/1/files' }
     );
 
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
@@ -69,7 +74,8 @@ describe('FileUpload Component', () => {
     mockedApi.post.mockRejectedValue(new Error('Upload failed'));
 
     const { container } = render(
-      <FileUpload contentType="task" objectId={1} onUploadComplete={() => {}} />
+      <FileUpload contentType="task" objectId={1} onUploadComplete={() => {}} />,
+      { route: '/projects/1/files' }
     );
 
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
@@ -88,7 +94,8 @@ describe('FileUpload Component', () => {
     const onUploadComplete = vi.fn();
 
     const { container } = render(
-      <FileUpload contentType="task" objectId={1} onUploadComplete={onUploadComplete} />
+      <FileUpload contentType="task" objectId={1} onUploadComplete={onUploadComplete} />,
+      { route: '/projects/1/files' }
     );
 
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
