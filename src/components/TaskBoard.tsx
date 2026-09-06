@@ -349,9 +349,6 @@ const TaskBoard: React.FC = () => {
           <Link to={`/projects/${projectId}`} className="back-link">→ بازگشت به پروژه</Link>
           <h1>بورد وظایف</h1>
         </div>
-        <div className="header-actions">
-          <button className="btn-primary" onClick={() => openTaskModal()}> + افزودن وظیفه</button>
-        </div>
       </div>
 
       {/* Create list form */}
@@ -430,6 +427,9 @@ const TaskBoard: React.FC = () => {
 
               {/* Task cards */}
               <div className="task-list">
+                {list.tasks?.length === 0 && (
+                  <div className="empty-list-message">وظیفه‌ای در این لیست نیست</div>
+                )}
                 {list.tasks?.map((task) => (
                   <div key={task.id} className="task-card">
                     <div className="task-card-header">

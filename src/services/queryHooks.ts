@@ -4,6 +4,7 @@ import { projectService } from './projectService';
 import { taskService } from './taskService';
 import { teamService } from './teamService';
 import { notificationService } from './notificationService';
+import { authService } from './authService';
 
 export const useProjects = () =>
   useQuery({
@@ -28,4 +29,17 @@ export const useUnreadCount = () =>
     queryKey: ['unread-count'],
     queryFn: () => notificationService.getUnreadCount(),
     refetchInterval: 1000 * 30,
+  });
+
+export const useProject = (slug: string) =>
+  useQuery({
+    queryKey: ['project', slug],
+    queryFn: () => projectService.getProject(slug),
+    enabled: !!slug,
+  });
+
+export const useUsers = () =>
+  useQuery({
+    queryKey: ['users'],
+    queryFn: () => authService.getUsers(),
   });

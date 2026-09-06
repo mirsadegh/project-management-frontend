@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { projectService, type Project, type ProjectMember } from '../services/projectService';
-import { authService } from '../services/authService';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { projectService, type ProjectMember } from '../services/projectService';
 import { useAuth } from '../services/contexts/AuthContext';
+import { useProject, useUsers } from '../services/queryHooks';
 import { getRoleLabel, getStatusLabel, getPriorityLabel, formatDate } from '../utils/labels';
 import type { ApiError } from '../services/types';
 type MemberRole = ProjectMember['role'];
@@ -11,17 +12,17 @@ const ProjectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [project, setProject] = useState<Project | null>(null);
-  const [members, setMembers] = useState<ProjectMember[]>([]);
-  const [users, setUsers] = useState<Array<{ id: number; username: string; full_name: string; email: string }>>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'files' | 'members'>('overview');
   const [selectedUserId, setSelectedUserId] = useState<number | ''>('');
   const [selectedRole, setSelectedRole] = useState<MemberRole>('MEMBER');
-  const [actionLoading, setActionLoading] = useState(false);
   const [memberError, setMemberError] = useState<string | null>(null);
   const [memberSuccess, setMemberSuccess] = useState<string | null>(null);
+
+  const { data: project, isLoading, error } = useProject(id ?? '');
+
+  const members = project?.members ?? [];
 
   const canManage = user && (
     user.role === 'ADMIN' ||
@@ -37,68 +38,21 @@ const ProjectDetail: React.FC = () => {
     (project && (project.owner.id === user.id || (project.manager && project.manager.id === user.id)))
   );
 
-  useEffect(() => {
-    if (id) {
-      loadProject(id);
-    }
-  }, [id]);
+  // useUsers is called unconditionally; it is a cheap cached list
+  const { data: users = [] } = useUsers();
 
-  useEffect(() => {
-    if (activeTab === 'members' && canManageMembers) {
-      loadUsers();
-    }
-  }, [activeTab, canManageMembers]);
-
-  const loadUsers = async () => {
-    try {
-      const data = await authService.getUsers();
-      setUsers(data);
-    } catch {
-      // Non-critical: the add form simply won't be populated.
-    }
-  };
-
-  const loadProject = async (projectSlug: string) => {
-    try {
-      setLoading(true);
-      const data = await projectService.getProject(projectSlug);
-      setProject(data);
-      setMembers(data.members || []);
-    } catch (err) {
-      const apiErr = err as ApiError;
-      setError(apiErr.response?.data?.detail || 'بارگذاری پروژه ناموفق بود');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return <div className="page-loading">در حال بارگذاری پروژه...</div>;
-  }
-
-  if (error || !project) {
-    return <div className="error-message">{error || 'پروژه یافت نشد'}</div>;
-  }
-
-  const memberUserIds = members.map((m) => m.user.id);
-  const availableUsers = users.filter((u) => !memberUserIds.includes(u.id));
-
-  const handleAddMember = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!id || selectedUserId === '') return;
-
-    setActionLoading(true);
-    setMemberError(null);
-    setMemberSuccess(null);
-    try {
-      const newMember = await projectService.addMember(id, Number(selectedUserId), selectedRole);
-      setMembers((prev) => [...prev, newMember]);
+  const addMemberMutation = useMutation({
+    mutationFn: (data: { user_id: number; role: MemberRole }) =>
+      projectService.addMember(id ?? '', data.user_id, data.role),
+    onSuccess: (newMember) => {
+      queryClient.invalidateQueries({ queryKey: ['project', id] });
       setSelectedUserId('');
       setSelectedRole('MEMBER');
       setMemberSuccess(`${newMember.user.full_name || newMember.user.username} به پروژه اضافه شد.`);
-    } catch (err) {
-      const apiErr = err as ApiError;
-      const data = apiErr.response?.data as
+      setMemberError(null);
+    },
+    onError: (err: ApiError) => {
+      const data = err.response?.data as
         | { detail?: string; user_id?: string[]; role?: string[] }
         | undefined;
       setMemberError(
@@ -107,27 +61,47 @@ const ProjectDetail: React.FC = () => {
         data?.role?.[0] ||
         'افزودن عضو ناموفق بود'
       );
-    } finally {
-      setActionLoading(false);
-    }
+      setMemberSuccess(null);
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: (memberId: number) => projectService.removeMember(id ?? '', memberId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', id] });
+      setMemberSuccess('عضو از پروژه حذف شد.');
+      setMemberError(null);
+    },
+    onError: (err: ApiError) => {
+      setMemberError(err.response?.data?.detail || 'حذف عضو ناموفق بود');
+      setMemberSuccess(null);
+    },
+  });
+
+  if (isLoading) {
+    return <div className="page-loading">در حال بارگذاری پروژه...</div>;
+  }
+
+  if (error || !project) {
+    return (
+      <div className="error-message">
+        {(error as ApiError)?.response?.data?.detail || 'پروژه یافت نشد'}
+      </div>
+    );
+  }
+
+  const memberUserIds = members.map((m) => m.user.id);
+  type AuthUser = { id: number; username: string; full_name: string; email: string };
+  const availableUsers = users.filter((u: AuthUser) => !memberUserIds.includes(u.id));
+
+  const handleAddMember = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedUserId === '') return;
+    addMemberMutation.mutate({ user_id: Number(selectedUserId), role: selectedRole });
   };
 
-  const handleRemoveMember = async (memberId: number) => {
-    if (!id) return;
-
-    setActionLoading(true);
-    setMemberError(null);
-    setMemberSuccess(null);
-    try {
-      await projectService.removeMember(id, memberId);
-      setMembers((prev) => prev.filter((m) => m.id !== memberId));
-      setMemberSuccess('عضو از پروژه حذف شد.');
-    } catch (err) {
-      const apiErr = err as ApiError;
-      setMemberError(apiErr.response?.data?.detail || 'حذف عضو ناموفق بود');
-    } finally {
-      setActionLoading(false);
-    }
+  const handleRemoveMember = (memberId: number) => {
+    removeMemberMutation.mutate(memberId);
   };
 
   return (
@@ -157,7 +131,7 @@ const ProjectDetail: React.FC = () => {
             )}
           </div>
         </div>
-        
+
         <p className="project-description">{project.description || 'بدون توضیحات'}</p>
 
         <div className="project-meta">
@@ -263,7 +237,7 @@ const ProjectDetail: React.FC = () => {
                         type="button"
                         className="btn-danger small"
                         onClick={() => handleRemoveMember(member.id)}
-                        disabled={actionLoading}
+                        disabled={removeMemberMutation.isPending}
                       >
                         حذف
                       </button>
@@ -282,7 +256,7 @@ const ProjectDetail: React.FC = () => {
                     value={selectedUserId}
                     onChange={(e) => setSelectedUserId(e.target.value === '' ? '' : Number(e.target.value))}
                     required
-                    disabled={actionLoading || availableUsers.length === 0}
+                    disabled={addMemberMutation.isPending || availableUsers.length === 0}
                   >
                     <option value="">
                       {availableUsers.length === 0 ? 'کاربری موجود نیست' : 'انتخاب کاربر'}
@@ -296,7 +270,7 @@ const ProjectDetail: React.FC = () => {
                   <select
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value as MemberRole)}
-                    disabled={actionLoading}
+                    disabled={addMemberMutation.isPending}
                   >
                     <option value="MEMBER">عضو</option>
                     <option value="MANAGER">مدیر</option>
@@ -305,9 +279,9 @@ const ProjectDetail: React.FC = () => {
                   <button
                     type="submit"
                     className="action-btn"
-                    disabled={actionLoading || selectedUserId === ''}
+                    disabled={addMemberMutation.isPending || selectedUserId === ''}
                   >
-                    {actionLoading ? 'در حال افزودن...' : 'افزودن کاربر'}
+                    {addMemberMutation.isPending ? 'در حال افزودن...' : 'افزودن کاربر'}
                   </button>
                 </div>
               </form>
