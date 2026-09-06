@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import DatePicker from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import { taskService, type Task, type TaskList } from '../services/taskService';
-import { projectService, type Project } from '../services/projectService';
-import { authService } from '../services/authService';
+import { useProject, useUsers, useProjectTasks } from '../services/queryHooks';
 import { getPriorityLabel, getTaskStatusLabel } from '../utils/labels';
 import { toJalaliDate, fromJalaliDate, formatDateJalali } from '../utils/date';
 import type { ApiError } from '../services/types';
@@ -25,28 +24,32 @@ const getErrorMessage = (err: unknown, fallback: string): string => {
 
 const TaskBoard: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const [taskLists, setTaskLists] = useState<TaskList[]>([]);
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  // ─── Data queries ─────────────────────────────────────────────────────────────
+  const { data: project, isLoading: loadingProject, error: projectError } = useProject(projectId ?? '');
+  const { data: taskLists = [], isLoading: loadingTasks, error: tasksError } = useProjectTasks(project?.id);
+  const { data: users = [] } = useUsers();
+
+  const isLoading = loadingProject || loadingTasks;
+  const error = projectError || tasksError;
+
+  // ─── Client-side state ───────────────────────────────────────────────────────
 
   // List form state
   const [showListForm, setShowListForm] = useState(false);
   const [listName, setListName] = useState('');
   const [listDesc, setListDesc] = useState('');
-  const [creatingList, setCreatingList] = useState(false);
   const [listError, setListError] = useState<string | null>(null);
 
   // Edit list modal state
   const [editingList, setEditingList] = useState<TaskList | null>(null);
   const [editListName, setEditListName] = useState('');
   const [editListDesc, setEditListDesc] = useState('');
-  const [updatingList, setUpdatingList] = useState(false);
   const [editListError, setEditListError] = useState<string | null>(null);
 
   // Task modal state
   const [showTaskModal, setShowTaskModal] = useState(false);
-  const [users, setUsers] = useState<Array<{ id: number; username: string; full_name: string }>>([]);
   const [taskForm, setTaskForm] = useState({
     task_list: '' as number | '',
     title: '',
@@ -56,7 +59,6 @@ const TaskBoard: React.FC = () => {
     due_date: '',
     assignee_id: '' as number | '',
   });
-  const [creatingTask, setCreatingTask] = useState(false);
   const [taskError, setTaskError] = useState<string | null>(null);
 
   // Edit task modal state
@@ -69,7 +71,6 @@ const TaskBoard: React.FC = () => {
     due_date: '',
     assignee_id: '' as number | '',
   });
-  const [updatingTask, setUpdatingTask] = useState(false);
   const [editTaskError, setEditTaskError] = useState<string | null>(null);
 
   // Delete confirmation state
@@ -77,26 +78,27 @@ const TaskBoard: React.FC = () => {
 
   // ─── Mutations ───────────────────────────────────────────────────────────────
 
-  const loadProjectAndTasks = async (projectSlug: string) => {
-    try {
-      setLoading(true);
-      const projectData = await projectService.getProject(projectSlug);
-      setProject(projectData);
-      const taskListsData = await taskService.getTaskLists(projectData.id);
-      setTaskLists(taskListsData);
-    } catch (err) {
-      setError(getErrorMessage(err, 'بارگذاری پروژه یا وظایف ناموفق بود'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const createListMutation = useMutation({
+    mutationFn: (data: { name: string; description?: string }) =>
+      taskService.createTaskList(project!.id, data.name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project-tasks', project?.id] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      setShowListForm(false);
+      toast.success('لیست وظایف ایجاد شد');
+    },
+    onError: (err: ApiError) => {
+      setListError(getErrorMessage(err, 'ایجاد لیست وظایف ناموفق بود'));
+    },
+  });
 
   const deleteListMutation = useMutation({
     mutationFn: (listId: number) => taskService.deleteTaskList(listId),
-    onSuccess: async () => {
+    onSuccess: () => {
       setConfirmDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['project-tasks', project?.id] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       toast.success('لیست وظایف حذف شد');
-      await loadProjectAndTasks(projectId!);
     },
     onError: (err: ApiError) => {
       toast.error(getErrorMessage(err, 'حذف لیست ناموفق بود'));
@@ -106,22 +108,46 @@ const TaskBoard: React.FC = () => {
   const updateListMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: { name: string; description?: string } }) =>
       taskService.updateTaskList(id, data),
-    onSuccess: async () => {
+    onSuccess: () => {
       setEditingList(null);
+      queryClient.invalidateQueries({ queryKey: ['project-tasks', project?.id] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       toast.success('لیست وظایف ویرایش شد');
-      await loadProjectAndTasks(projectId!);
     },
     onError: (err: ApiError) => {
       setEditListError(getErrorMessage(err, 'ویرایش لیست ناموفق بود'));
     },
   });
 
+  const createTaskMutation = useMutation({
+    mutationFn: (data: {
+      project: number;
+      task_list: number;
+      title: string;
+      description?: string;
+      priority: Task['priority'];
+      status: Task['status'];
+      due_date: string | null;
+      assignee_id: number | null;
+    }) => taskService.createTask(data),
+    onSuccess: () => {
+      setShowTaskModal(false);
+      queryClient.invalidateQueries({ queryKey: ['project-tasks', project?.id] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      toast.success('وظیفه ایجاد شد');
+    },
+    onError: (err: ApiError) => {
+      setTaskError(getErrorMessage(err, 'ایجاد وظیفه ناموفق بود'));
+    },
+  });
+
   const deleteTaskMutation = useMutation({
     mutationFn: (taskId: number) => taskService.deleteTask(taskId),
-    onSuccess: async () => {
+    onSuccess: () => {
       setConfirmDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['project-tasks', project?.id] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       toast.success('وظیفه حذف شد');
-      await loadProjectAndTasks(projectId!);
     },
     onError: (err: ApiError) => {
       toast.error(getErrorMessage(err, 'حذف وظیفه ناموفق بود'));
@@ -131,23 +157,16 @@ const TaskBoard: React.FC = () => {
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<Task> }) =>
       taskService.updateTask(id, data),
-    onSuccess: async () => {
+    onSuccess: () => {
       setEditingTask(null);
+      queryClient.invalidateQueries({ queryKey: ['project-tasks', project?.id] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       toast.success('وظیفه ویرایش شد');
-      await loadProjectAndTasks(projectId!);
     },
     onError: (err: ApiError) => {
       setEditTaskError(getErrorMessage(err, 'ویرایش وظیفه ناموفق بود'));
     },
   });
-
-  // ─── Effects ────────────────────────────────────────────────────────────────
-
-  React.useEffect(() => {
-    if (projectId) {
-      loadProjectAndTasks(projectId);
-    }
-  }, [projectId]);
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
@@ -158,23 +177,14 @@ const TaskBoard: React.FC = () => {
     setShowListForm(true);
   };
 
-  const handleCreateList = async (e: React.FormEvent) => {
+  const handleCreateList = (e: React.FormEvent) => {
     e.preventDefault();
     if (!project || !listName.trim()) {
       setListError('نام لیست الزامی است');
       return;
     }
-    setCreatingList(true);
     setListError(null);
-    try {
-      await taskService.createTaskList(project.id, listName.trim());
-      setShowListForm(false);
-      await loadProjectAndTasks(projectId!);
-    } catch (err) {
-      setListError(getErrorMessage(err, 'ایجاد لیست وظایف ناموفق بود'));
-    } finally {
-      setCreatingList(false);
-    }
+    createListMutation.mutate({ name: listName.trim(), description: listDesc.trim() || undefined });
   };
 
   const openEditListModal = (list: TaskList) => {
@@ -184,34 +194,29 @@ const TaskBoard: React.FC = () => {
     setEditListError(null);
   };
 
-  const handleUpdateList = async (e: React.FormEvent) => {
+  const handleUpdateList = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingList || !editListName.trim()) {
       setEditListError('نام لیست الزامی است');
       return;
     }
-    setUpdatingList(true);
     setEditListError(null);
-    try {
-      await updateListMutation.mutateAsync({
-        id: editingList.id,
-        data: { name: editListName.trim(), description: editListDesc.trim() || undefined },
-      });
-    } finally {
-      setUpdatingList(false);
-    }
+    updateListMutation.mutate({
+      id: editingList.id,
+      data: { name: editListName.trim(), description: editListDesc.trim() || undefined },
+    });
   };
 
   const handleDeleteList = (list: TaskList) => {
     setConfirmDelete({ type: 'list', id: list.id, name: list.name });
   };
 
-  const confirmDeleteList = async () => {
+  const confirmDeleteList = () => {
     if (!confirmDelete || confirmDelete.type !== 'list') return;
-    await deleteListMutation.mutateAsync(confirmDelete.id);
+    deleteListMutation.mutate(confirmDelete.id);
   };
 
-  const openTaskModal = async (presetListId?: number) => {
+  const openTaskModal = (presetListId?: number) => {
     if (taskLists.length === 0) {
       setTaskError('ابتدا یک لیست وظایف بسازید');
       return;
@@ -226,16 +231,10 @@ const TaskBoard: React.FC = () => {
       due_date: '',
       assignee_id: '',
     });
-    try {
-      const data = await authService.getUsers();
-      setUsers(data);
-    } catch {
-      setUsers([]);
-    }
     setShowTaskModal(true);
   };
 
-  const handleCreateTask = async (e: React.FormEvent) => {
+  const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!project || !taskForm.title.trim()) {
       setTaskError('عنوان وظیفه الزامی است');
@@ -245,29 +244,20 @@ const TaskBoard: React.FC = () => {
       setTaskError('لطفاً یک لیست وظایف انتخاب کنید');
       return;
     }
-    setCreatingTask(true);
     setTaskError(null);
-    try {
-      await taskService.createTask({
-        project: project.id,
-        title: taskForm.title.trim(),
-        description: taskForm.description.trim(),
-        task_list: Number(taskForm.task_list),
-        priority: taskForm.priority,
-        status: taskForm.status,
-        due_date: taskForm.due_date || null,
-        assignee_id: taskForm.assignee_id === '' ? null : Number(taskForm.assignee_id),
-      });
-      setShowTaskModal(false);
-      await loadProjectAndTasks(projectId!);
-    } catch (err) {
-      setTaskError(getErrorMessage(err, 'ایجاد وظیفه ناموفق بود'));
-    } finally {
-      setCreatingTask(false);
-    }
+    createTaskMutation.mutate({
+      project: project.id,
+      task_list: Number(taskForm.task_list),
+      title: taskForm.title.trim(),
+      description: taskForm.description.trim() || undefined,
+      priority: taskForm.priority,
+      status: taskForm.status,
+      due_date: taskForm.due_date || null,
+      assignee_id: taskForm.assignee_id === '' ? null : Number(taskForm.assignee_id),
+    });
   };
 
-  const openEditTaskModal = async (task: Task) => {
+  const openEditTaskModal = (task: Task) => {
     setEditingTask(task);
     setEditTaskForm({
       title: task.title,
@@ -278,46 +268,35 @@ const TaskBoard: React.FC = () => {
       assignee_id: task.assignee?.id ?? '',
     });
     setEditTaskError(null);
-    try {
-      const data = await authService.getUsers();
-      setUsers(data);
-    } catch {
-      setUsers([]);
-    }
   };
 
-  const handleUpdateTask = async (e: React.FormEvent) => {
+  const handleUpdateTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTask || !editTaskForm.title.trim()) {
       setEditTaskError('عنوان وظیفه الزامی است');
       return;
     }
-    setUpdatingTask(true);
     setEditTaskError(null);
-    try {
-      await updateTaskMutation.mutateAsync({
-        id: editingTask.id,
-        data: {
-          title: editTaskForm.title.trim(),
-          description: editTaskForm.description.trim() || undefined,
-          priority: editTaskForm.priority,
-          status: editTaskForm.status,
-          due_date: editTaskForm.due_date || null,
-          assignee_id: editTaskForm.assignee_id === '' ? null : Number(editTaskForm.assignee_id),
-        },
-      });
-    } finally {
-      setUpdatingTask(false);
-    }
+    updateTaskMutation.mutate({
+      id: editingTask.id,
+      data: {
+        title: editTaskForm.title.trim(),
+        description: editTaskForm.description.trim() || undefined,
+        priority: editTaskForm.priority,
+        status: editTaskForm.status,
+        due_date: editTaskForm.due_date || null,
+        assignee_id: editTaskForm.assignee_id === '' ? null : Number(editTaskForm.assignee_id),
+      },
+    });
   };
 
   const handleDeleteTask = (task: Task) => {
     setConfirmDelete({ type: 'task', id: task.id, name: task.title });
   };
 
-  const confirmDeleteTask = async () => {
+  const confirmDeleteTask = () => {
     if (!confirmDelete || confirmDelete.type !== 'task') return;
-    await deleteTaskMutation.mutateAsync(confirmDelete.id);
+    deleteTaskMutation.mutate(confirmDelete.id);
   };
 
   // ─── Priority colour helper ────────────────────────────────────────────────
@@ -332,14 +311,14 @@ const TaskBoard: React.FC = () => {
     }
   };
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // ─── Render ───────────────────────────────────────────────────────────────
 
-  if (loading) {
+  if (isLoading) {
     return <div className="page-loading">در حال بارگذاری بورد وظایف...</div>;
   }
 
   if (error) {
-    return <div className="error-message">{error}</div>;
+    return <div className="error-message">{getErrorMessage(error, 'بارگذاری پروژه یا وظایف ناموفق بود')}</div>;
   }
 
   return (
@@ -362,7 +341,7 @@ const TaskBoard: React.FC = () => {
               value={listName}
               onChange={(e) => setListName(e.target.value)}
               placeholder="مثلاً: انجام‌نشده"
-              disabled={creatingList}
+              disabled={createListMutation.isPending}
             />
           </div>
           <div className="form-group">
@@ -371,15 +350,15 @@ const TaskBoard: React.FC = () => {
               type="text"
               value={listDesc}
               onChange={(e) => setListDesc(e.target.value)}
-              disabled={creatingList}
+              disabled={createListMutation.isPending}
             />
           </div>
           <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={() => setShowListForm(false)} disabled={creatingList}>
+            <button type="button" className="btn-secondary" onClick={() => setShowListForm(false)} disabled={createListMutation.isPending}>
               انصراف
             </button>
-            <button type="submit" className="btn-primary" disabled={creatingList}>
-              {creatingList ? 'در حال ایجاد...' : 'ایجاد لیست'}
+            <button type="submit" className="btn-primary" disabled={createListMutation.isPending}>
+              {createListMutation.isPending ? 'در حال ایجاد...' : 'ایجاد لیست'}
             </button>
           </div>
         </form>
@@ -503,7 +482,7 @@ const TaskBoard: React.FC = () => {
                 <select
                   value={taskForm.task_list}
                   onChange={(e) => setTaskForm({ ...taskForm, task_list: e.target.value === '' ? '' : Number(e.target.value) })}
-                  disabled={creatingTask}
+                  disabled={createTaskMutation.isPending}
                   required
                 >
                   {taskLists.map((l) => (
@@ -518,7 +497,7 @@ const TaskBoard: React.FC = () => {
                   value={taskForm.title}
                   onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
                   placeholder="عنوان وظیفه"
-                  disabled={creatingTask}
+                  disabled={createTaskMutation.isPending}
                   required
                 />
               </div>
@@ -527,7 +506,7 @@ const TaskBoard: React.FC = () => {
                 <textarea
                   value={taskForm.description}
                   onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
-                  disabled={creatingTask}
+                  disabled={createTaskMutation.isPending}
                 />
               </div>
               <div className="form-row">
@@ -536,7 +515,7 @@ const TaskBoard: React.FC = () => {
                   <select
                     value={taskForm.priority}
                     onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as Task['priority'] })}
-                    disabled={creatingTask}
+                    disabled={createTaskMutation.isPending}
                   >
                     {PRIORITIES.map((p) => (
                       <option key={p} value={p}>{getPriorityLabel(p)}</option>
@@ -548,7 +527,7 @@ const TaskBoard: React.FC = () => {
                   <select
                     value={taskForm.status}
                     onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value as Task['status'] })}
-                    disabled={creatingTask}
+                    disabled={createTaskMutation.isPending}
                   >
                     {STATUSES.map((s) => (
                       <option key={s} value={s}>{getTaskStatusLabel(s)}</option>
@@ -564,7 +543,7 @@ const TaskBoard: React.FC = () => {
                     onChange={(v: Value) =>
                       setTaskForm({ ...taskForm, due_date: fromJalaliDate(v as Date | null) || '' })
                     }
-                    disabled={creatingTask}
+                    disabled={createTaskMutation.isPending}
                     calendar={persian}
                     locale={persian_fa}
                     inputClass="date-input"
@@ -578,7 +557,7 @@ const TaskBoard: React.FC = () => {
                   <select
                     value={taskForm.assignee_id}
                     onChange={(e) => setTaskForm({ ...taskForm, assignee_id: e.target.value === '' ? '' : Number(e.target.value) })}
-                    disabled={creatingTask}
+                    disabled={createTaskMutation.isPending}
                   >
                     <option value="">بدون مسئول</option>
                     {users.map((u) => (
@@ -588,11 +567,11 @@ const TaskBoard: React.FC = () => {
                 </div>
               </div>
               <div className="form-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowTaskModal(false)} disabled={creatingTask}>
+                <button type="button" className="btn-secondary" onClick={() => setShowTaskModal(false)} disabled={createTaskMutation.isPending}>
                   انصراف
                 </button>
-                <button type="submit" className="btn-primary" disabled={creatingTask}>
-                  {creatingTask ? 'در حال ایجاد...' : 'ایجاد وظیفه'}
+                <button type="submit" className="btn-primary" disabled={createTaskMutation.isPending}>
+                  {createTaskMutation.isPending ? 'در حال ایجاد...' : 'ایجاد وظیفه'}
                 </button>
               </div>
             </form>
@@ -615,7 +594,7 @@ const TaskBoard: React.FC = () => {
                   onChange={(e) => setEditListName(e.target.value)}
                   placeholder="نام لیست"
                   required
-                  disabled={updatingList}
+                  disabled={updateListMutation.isPending}
                 />
               </div>
               <div className="form-group">
@@ -624,15 +603,15 @@ const TaskBoard: React.FC = () => {
                   type="text"
                   value={editListDesc}
                   onChange={(e) => setEditListDesc(e.target.value)}
-                  disabled={updatingList}
+                  disabled={updateListMutation.isPending}
                 />
               </div>
               <div className="form-actions">
-                <button type="button" className="btn-secondary" onClick={() => setEditingList(null)} disabled={updatingList}>
+                <button type="button" className="btn-secondary" onClick={() => setEditingList(null)} disabled={updateListMutation.isPending}>
                   انصراف
                 </button>
-                <button type="submit" className="btn-primary" disabled={updatingList}>
-                  {updatingList ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
+                <button type="submit" className="btn-primary" disabled={updateListMutation.isPending}>
+                  {updateListMutation.isPending ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
                 </button>
               </div>
             </form>
@@ -655,7 +634,7 @@ const TaskBoard: React.FC = () => {
                   onChange={(e) => setEditTaskForm({ ...editTaskForm, title: e.target.value })}
                   placeholder="عنوان وظیفه"
                   required
-                  disabled={updatingTask}
+                  disabled={updateTaskMutation.isPending}
                 />
               </div>
               <div className="form-group">
@@ -663,7 +642,7 @@ const TaskBoard: React.FC = () => {
                 <textarea
                   value={editTaskForm.description}
                   onChange={(e) => setEditTaskForm({ ...editTaskForm, description: e.target.value })}
-                  disabled={updatingTask}
+                  disabled={updateTaskMutation.isPending}
                 />
               </div>
               <div className="form-row">
@@ -672,7 +651,7 @@ const TaskBoard: React.FC = () => {
                   <select
                     value={editTaskForm.priority}
                     onChange={(e) => setEditTaskForm({ ...editTaskForm, priority: e.target.value as Task['priority'] })}
-                    disabled={updatingTask}
+                    disabled={updateTaskMutation.isPending}
                   >
                     {PRIORITIES.map((p) => (
                       <option key={p} value={p}>{getPriorityLabel(p)}</option>
@@ -684,7 +663,7 @@ const TaskBoard: React.FC = () => {
                   <select
                     value={editTaskForm.status}
                     onChange={(e) => setEditTaskForm({ ...editTaskForm, status: e.target.value as Task['status'] })}
-                    disabled={updatingTask}
+                    disabled={updateTaskMutation.isPending}
                   >
                     {STATUSES.map((s) => (
                       <option key={s} value={s}>{getTaskStatusLabel(s)}</option>
@@ -700,7 +679,7 @@ const TaskBoard: React.FC = () => {
                     onChange={(v: Value) =>
                       setEditTaskForm({ ...editTaskForm, due_date: fromJalaliDate(v as Date | null) || '' })
                     }
-                    disabled={updatingTask}
+                    disabled={updateTaskMutation.isPending}
                     calendar={persian}
                     locale={persian_fa}
                     inputClass="date-input"
@@ -714,7 +693,7 @@ const TaskBoard: React.FC = () => {
                   <select
                     value={editTaskForm.assignee_id}
                     onChange={(e) => setEditTaskForm({ ...editTaskForm, assignee_id: e.target.value === '' ? '' : Number(e.target.value) })}
-                    disabled={updatingTask}
+                    disabled={updateTaskMutation.isPending}
                   >
                     <option value="">بدون مسئول</option>
                     {users.map((u) => (
@@ -724,11 +703,11 @@ const TaskBoard: React.FC = () => {
                 </div>
               </div>
               <div className="form-actions">
-                <button type="button" className="btn-secondary" onClick={() => setEditingTask(null)} disabled={updatingTask}>
+                <button type="button" className="btn-secondary" onClick={() => setEditingTask(null)} disabled={updateTaskMutation.isPending}>
                   انصراف
                 </button>
-                <button type="submit" className="btn-primary" disabled={updatingTask}>
-                  {updatingTask ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
+                <button type="submit" className="btn-primary" disabled={updateTaskMutation.isPending}>
+                  {updateTaskMutation.isPending ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
                 </button>
               </div>
             </form>

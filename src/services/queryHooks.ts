@@ -43,3 +43,10 @@ export const useUsers = () =>
     queryKey: ['users'],
     queryFn: () => authService.getUsers(),
   });
+
+export const useProjectTasks = (projectId: number | undefined) =>
+  useQuery({
+    queryKey: ['project-tasks', projectId],
+    queryFn: () => taskService.getTaskLists(projectId!),
+    enabled: !!projectId,
+  });
