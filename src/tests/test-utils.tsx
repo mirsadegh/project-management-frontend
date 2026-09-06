@@ -40,6 +40,8 @@ const customRender = (
           { index: true, element: <div>Home</div> },
           { path: 'projects/:projectId/tasks', element: ui },
           { path: 'projects/:id', element: ui },
+          { path: 'projects/:id/edit', element: ui },
+          { path: 'projects/:id/settings', element: ui },
           { path: 'projects', element: ui },
           { path: 'teams/:id', element: ui },
           { path: 'teams', element: ui },
