@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
+import DatePicker from 'react-multi-date-picker';
+import persian from 'react-date-object/calendars/persian';
+import persian_fa from 'react-date-object/locales/persian_fa';
 import { taskService, type Task, type TaskList } from '../services/taskService';
 import { projectService, type Project } from '../services/projectService';
 import { authService } from '../services/authService';
-import { getPriorityLabel, getTaskStatusLabel, formatDate } from '../utils/labels';
+import { getPriorityLabel, getTaskStatusLabel } from '../utils/labels';
+import { toJalaliDate, fromJalaliDate, formatDateJalali } from '../utils/date';
 import type { ApiError } from '../services/types';
 import { toast } from 'react-toastify';
+import type { Value } from 'react-multi-date-picker';
 
 const PRIORITIES: Task['priority'][] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 const STATUSES: Task['status'][] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'COMPLETED', 'BLOCKED'];
@@ -472,7 +477,7 @@ const TaskBoard: React.FC = () => {
                       </div>
                       {task.due_date && (
                         <span className={`task-due-date ${task.is_overdue ? 'overdue' : ''}`}>
-                          {formatDate(task.due_date)}
+                          {formatDateJalali(task.due_date)}
                         </span>
                       )}
                     </div>
@@ -554,11 +559,18 @@ const TaskBoard: React.FC = () => {
               <div className="form-row">
                 <div className="form-group">
                   <label>مهلت</label>
-                  <input
-                    type="date"
-                    value={taskForm.due_date}
-                    onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })}
+                  <DatePicker
+                    value={toJalaliDate(taskForm.due_date || null)}
+                    onChange={(v: Value) =>
+                      setTaskForm({ ...taskForm, due_date: fromJalaliDate(v as Date | null) || '' })
+                    }
                     disabled={creatingTask}
+                    calendar={persian}
+                    locale={persian_fa}
+                    inputClass="date-input"
+                    containerClassName="date-picker-container"
+                    format="YYYY/MM/DD"
+                    placeholder="انتخاب تاریخ"
                   />
                 </div>
                 <div className="form-group">
@@ -683,11 +695,18 @@ const TaskBoard: React.FC = () => {
               <div className="form-row">
                 <div className="form-group">
                   <label>مهلت</label>
-                  <input
-                    type="date"
-                    value={editTaskForm.due_date}
-                    onChange={(e) => setEditTaskForm({ ...editTaskForm, due_date: e.target.value })}
+                  <DatePicker
+                    value={toJalaliDate(editTaskForm.due_date || null)}
+                    onChange={(v: Value) =>
+                      setEditTaskForm({ ...editTaskForm, due_date: fromJalaliDate(v as Date | null) || '' })
+                    }
                     disabled={updatingTask}
+                    calendar={persian}
+                    locale={persian_fa}
+                    inputClass="date-input"
+                    containerClassName="date-picker-container"
+                    format="YYYY/MM/DD"
+                    placeholder="انتخاب تاریخ"
                   />
                 </div>
                 <div className="form-group">

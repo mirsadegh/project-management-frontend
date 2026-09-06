@@ -1555,6 +1555,40 @@
   gap: 0.5rem;
 }
 
+/* Date picker overrides */
+.date-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  direction: rtl;
+  text-align: right;
+  background: white;
+  color: #1f2937;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #646cff;
+  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
+}
+
+.date-picker-container {
+  width: 100%;
+}
+
+/* Persian calendar overrides */
+.rmdp-container {
+  direction: rtl;
+}
+
+.rmdp-input {
+  direction: rtl;
+  text-align: right;
+}
+
 /* Task Board Page */
 .task-board-page {
   color: white;

@@ -1,5 +1,7 @@
 /** برچسب‌ها و ترجمه‌های مشترک فارسی */
 
+import { toJalali } from './date';
+
 export const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'مدیر سیستم',
   PM: 'مدیر پروژه',
@@ -59,10 +61,20 @@ export function getTaskStatusLabel(status?: string | null): string {
 
 export function formatDate(dateString?: string | null): string {
   if (!dateString) return '—';
-  return new Date(dateString).toLocaleDateString('fa-IR');
+  // Backend returns Gregorian YYYY-MM-DD; display as Jalali
+  const j = toJalali(dateString);
+  if (!j) return '—';
+  return `${j.jy}/${String(j.jm).padStart(2, '0')}/${String(j.jd).padStart(2, '0')}`;
 }
 
 export function formatDateTime(dateString?: string | null): string {
   if (!dateString) return '—';
-  return new Date(dateString).toLocaleString('fa-IR');
+  // Backend returns Gregorian YYYY-MM-DD; display as Jalali
+  const j = toJalali(dateString);
+  if (!j) return '—';
+  return `${j.jy}/${String(j.jm).padStart(2, '0')}/${String(j.jd).padStart(2, '0')}`;
 }
+
+// Re-export Jalali utilities for use in components
+export { toJalali, toDate, toGregorianString, toJalaliDate, fromJalaliDate } from './date';
+export type { JalaliDate } from './date';

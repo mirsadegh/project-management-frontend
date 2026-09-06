@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import DatePicker from 'react-multi-date-picker';
+import persian from 'react-date-object/calendars/persian';
+import persian_fa from 'react-date-object/locales/persian_fa';
 import { projectService, type Project } from '../services/projectService';
 import { useProjects } from '../services/queryHooks';
 import { getStatusLabel, getPriorityLabel, formatDate } from '../utils/labels';
+import { toJalaliDate, fromJalaliDate } from '../utils/date';
 import type { ApiError } from '../services/types';
 import type { UseMutationResult } from '@tanstack/react-query';
+import type { Value } from 'react-multi-date-picker';
 
 const ProjectsList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -258,18 +263,32 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, create
           <div className="form-row">
             <div className="form-group">
               <label>تاریخ شروع</label>
-              <input
-                type="date"
-                value={formData.start_date}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              <DatePicker
+                value={toJalaliDate(formData.start_date || null)}
+                onChange={(v: Value) =>
+                  setFormData({ ...formData, start_date: fromJalaliDate(v as Date | null) || '' })
+                }
+                calendar={persian}
+                locale={persian_fa}
+                inputClass="date-input"
+                containerClassName="date-picker-container"
+                format="YYYY/MM/DD"
+                placeholder="انتخاب تاریخ"
               />
             </div>
             <div className="form-group">
               <label>مهلت</label>
-              <input
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+              <DatePicker
+                value={toJalaliDate(formData.due_date || null)}
+                onChange={(v: Value) =>
+                  setFormData({ ...formData, due_date: fromJalaliDate(v as Date | null) || '' })
+                }
+                calendar={persian}
+                locale={persian_fa}
+                inputClass="date-input"
+                containerClassName="date-picker-container"
+                format="YYYY/MM/DD"
+                placeholder="انتخاب تاریخ"
               />
             </div>
           </div>
