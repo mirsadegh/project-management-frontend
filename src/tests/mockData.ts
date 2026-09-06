@@ -5,10 +5,18 @@ export const mockUser = {
   id: 1,
   username: 'testuser',
   email: 'test@example.com',
-  first_name: 'Test',
-  last_name: 'User',
-  full_name: 'Test User',
+  first_name: 'علی',
+  last_name: 'احمدی',
+  full_name: 'علی احمدی',
   role: 'DEV',
+  department: 'فنی',
+  is_available: true,
+  job_title: 'توسعه‌دهنده',
+  phone_number: '۰۹۱۲۳۴۵۶۷۸۹',
+  bio: 'توسعه‌دهنده فول‌استک',
+  profile_picture: null,
+  date_joined: '2024-01-15T10:00:00Z',
+  last_login: '2024-06-01T08:30:00Z',
 };
 
 export const mockUserSummary = {
