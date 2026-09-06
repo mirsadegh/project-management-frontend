@@ -52,7 +52,8 @@ describe('AuthContext', () => {
       render(
         <AuthProvider>
           <TestComponent />
-        </AuthProvider>
+        </AuthProvider>,
+        { route: '/test' }
       );
 
       expect(screen.getByTestId('user')).toHaveTextContent('no-user');
@@ -75,7 +76,8 @@ describe('AuthContext', () => {
       render(
         <AuthProvider>
           <TestComponent />
-        </AuthProvider>
+        </AuthProvider>,
+        { route: '/test' }
       );
 
       await waitFor(() => {
@@ -101,7 +103,8 @@ describe('AuthContext', () => {
       render(
         <AuthProvider>
           <TestComponent />
-        </AuthProvider>
+        </AuthProvider>,
+        { route: '/test' }
       );
 
       await waitFor(() => {
@@ -133,10 +136,11 @@ describe('AuthContext', () => {
 
     it('should provide login function', async () => {
       // Sequence: (1) initial probe fails -> user stays null.
-      //          (2) login() is called.
-      //          (3) login() re-fetches /me/ -> returns the user.
+      //          (2) login() is called -> calls getCurrentUser()
+      //          (3) login() calls getCurrentUser() again to confirm identity.
       (authService.getCurrentUser as jest.Mock)
         .mockRejectedValueOnce(new Error('not authenticated'))
+        .mockResolvedValueOnce(mockUser)
         .mockResolvedValueOnce(mockUser);
       (authService.login as jest.Mock).mockResolvedValue(mockAuthTokens);
 
@@ -150,9 +154,6 @@ describe('AuthContext', () => {
         );
       };
 
-      // NOTE: use rawRender here because `render` from test-utils
-      // double-wraps the component in its own AuthProvider, which
-      // would cause getCurrentUser to be called twice during init.
       rawRender(
         <AuthProvider>
           <TestComponent />
@@ -192,7 +193,8 @@ describe('AuthContext', () => {
       render(
         <AuthProvider>
           <TestComponent />
-        </AuthProvider>
+        </AuthProvider>,
+        { route: '/test' }
       );
 
       // Wait for initialization
@@ -203,7 +205,7 @@ describe('AuthContext', () => {
       // Click logout button
       fireEvent.click(screen.getByText('Logout'));
 
-      // Check that user is set to null
+      // logout() is async; wait for setUser(null) to be called after authService.logout resolves
       await waitFor(() => {
         expect(screen.getByTestId('user')).toHaveTextContent('no-user');
         expect(authService.logout).toHaveBeenCalled();
@@ -211,7 +213,13 @@ describe('AuthContext', () => {
     });
 
     it('should provide register function', async () => {
-      (authService.getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+      // Sequence: (1) initial probe returns user.
+      //          (2) register() is called.
+      //          (3) After successful register, implementation calls getCurrentUser() again.
+      (authService.getCurrentUser as jest.Mock)
+        .mockResolvedValueOnce(mockUser)
+        .mockResolvedValueOnce(mockUser)
+        .mockResolvedValueOnce(mockUser);
       (authService.register as jest.Mock).mockResolvedValue(undefined);
 
       const TestComponent = () => {
@@ -233,8 +241,14 @@ describe('AuthContext', () => {
       render(
         <AuthProvider>
           <TestComponent />
-        </AuthProvider>
+        </AuthProvider>,
+        { route: '/test' }
       );
+
+      // Wait for initial probe to resolve
+      await waitFor(() => {
+        expect(authService.getCurrentUser).toHaveBeenCalled();
+      });
 
       // Click register button
       fireEvent.click(screen.getByText('Register'));

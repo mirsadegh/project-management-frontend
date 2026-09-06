@@ -324,7 +324,9 @@ describe('ProjectsList', () => {
       const createButton = screen.getByRole('button', { name: /پروژه جدید/i });
       await user.click(createButton);
 
-      expect(screen.getByText('ایجاد پروژه جدید')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('ایجاد پروژه جدید')).toBeInTheDocument();
+      });
     });
 
     it('closes the modal when cancel button is clicked', async () => {
@@ -341,12 +343,16 @@ describe('ProjectsList', () => {
       await waitFor(() => screen.getByText('پروژه اول'));
 
       await user.click(screen.getByRole('button', { name: /پروژه جدید/i }));
-      expect(screen.getByText('ایجاد پروژه جدید')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('ایجاد پروژه جدید')).toBeInTheDocument();
+      });
 
       const closeButton = screen.getByRole('button', { name: /انصراف/i });
       await user.click(closeButton);
 
-      expect(screen.queryByText('ایجاد پروژه جدید')).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText('ایجاد پروژه جدید')).not.toBeInTheDocument();
+      });
     });
 
     it('closes modal when overlay is clicked', async () => {
@@ -362,7 +368,9 @@ describe('ProjectsList', () => {
 
       await waitFor(() => screen.getByText('پروژه اول'));
       await user.click(screen.getByRole('button', { name: /پروژه جدید/i }));
-      expect(screen.getByText('ایجاد پروژه جدید')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('ایجاد پروژه جدید')).toBeInTheDocument();
+      });
 
       // Click outside the modal content (on the overlay)
       const modal = screen.getByText('ایجاد پروژه جدید').closest('.modal-overlay');
@@ -389,12 +397,18 @@ describe('ProjectsList', () => {
       await waitFor(() => screen.getByText('پروژه اول'));
       await user.click(screen.getByRole('button', { name: /پروژه جدید/i }));
 
+      await waitFor(() => {
+        expect(screen.getByText('ایجاد پروژه جدید')).toBeInTheDocument();
+      });
+
       // Submit without filling name — browser HTML5 validation prevents submission
       const submitButton = screen.getByRole('button', { name: /ایجاد پروژه/i });
       await user.click(submitButton);
 
       // Modal should still be open (form didn't submit)
-      expect(screen.getByText('ایجاد پروژه جدید')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('ایجاد پروژه جدید')).toBeInTheDocument();
+      });
     });
 
     it('shows priority options in the form', async () => {
@@ -410,6 +424,10 @@ describe('ProjectsList', () => {
 
       await waitFor(() => screen.getByText('پروژه اول'));
       await user.click(screen.getByRole('button', { name: /پروژه جدید/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('ایجاد پروژه جدید')).toBeInTheDocument();
+      });
 
       // Scope to the modal to avoid card badge conflicts
       const modal = screen.getByRole('heading', { name: 'ایجاد پروژه جدید' }).closest('.modal-content') as HTMLElement;
