@@ -1,31 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { projectService, type Project } from '../services/projectService';
+import { useProjects } from '../services/queryHooks';
 import { getStatusLabel, getPriorityLabel, formatDate } from '../utils/labels';
 import type { ApiError } from '../services/types';
+import type { UseMutationResult } from '@tanstack/react-query';
+
 const ProjectsList: React.FC = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  useEffect(() => {
-    loadProjects();
-  }, []);
+  const { data: projects = [], isLoading, error } = useProjects();
 
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
-      const data = await projectService.getProjects();
-      setProjects(data);
-    } catch (err) {
-      const apiErr = err as ApiError;
-      setError(apiErr.response?.data?.detail || 'بارگذاری پروژه‌ها ناموفق بود');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const createMutation = useMutation({
+    mutationFn: (data: Partial<Project>) => projectService.createProject(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+    onError: (err: ApiError) => {
+      console.error(err.response?.data?.detail || 'ایجاد پروژه ناموفق بود');
+    },
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -53,7 +50,7 @@ const ProjectsList: React.FC = () => {
     project.description.toLowerCase().includes(filter.toLowerCase())
   );
 
-  if (loading) {
+  if (isLoading) {
     return <div className="page-loading">در حال بارگذاری پروژه‌ها...</div>;
   }
 
@@ -78,7 +75,7 @@ const ProjectsList: React.FC = () => {
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="error-message">{(error as ApiError).response?.data?.detail || 'بارگذاری پروژه‌ها ناموفق بود'}</div>}
 
       {filteredProjects.length === 0 ? (
         <div className="empty-state">
@@ -168,9 +165,9 @@ const ProjectsList: React.FC = () => {
       )}
 
       {showCreateModal && (
-        <CreateProjectModal 
+        <CreateProjectModal
           onClose={() => setShowCreateModal(false)}
-          onCreated={loadProjects}
+          createMutation={createMutation}
         />
       )}
     </div>
@@ -179,10 +176,10 @@ const ProjectsList: React.FC = () => {
 
 interface CreateProjectModalProps {
   onClose: () => void;
-  onCreated: () => void;
+  createMutation: UseMutationResult<Project, ApiError, Partial<Project>, unknown>;
 }
 
-const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onCreated }) => {
+const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, createMutation }) => {
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
@@ -196,23 +193,18 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onCrea
     start_date: '',
     due_date: '',
   });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
     try {
-      await projectService.createProject(formData);
-      onCreated();
+      await createMutation.mutateAsync(formData);
       onClose();
     } catch (err) {
       const apiErr = err as ApiError;
       setError(apiErr.response?.data?.detail || 'ایجاد پروژه ناموفق بود');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -225,7 +217,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onCrea
         </div>
         
         <form onSubmit={handleSubmit}>
-          {error && <div className="error-message">{error}</div>}
+          {error && <div className="error-message">{(error as ApiError).response?.data?.detail || 'بارگذاری پروژه‌ها ناموفق بود'}</div>}
           
           <div className="form-group">
             <label>نام پروژه *</label>
@@ -286,8 +278,8 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onCrea
             <button type="button" className="btn-secondary" onClick={onClose}>
               انصراف
             </button>
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'در حال ایجاد...' : 'ایجاد پروژه'}
+            <button type="submit" className="btn-primary" disabled={createMutation.isPending}>
+              {createMutation.isPending ? 'در حال ایجاد...' : 'ایجاد پروژه'}
             </button>
           </div>
         </form>
