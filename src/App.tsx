@@ -16,6 +16,8 @@ import type { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './services/contexts/AuthContext';
+import { ThemeProvider } from './services/contexts/ThemeContext';
+import ThemeToggle from './components/common/ThemeToggle';
 import ErrorBoundary from './components/ErrorBoundary';
 import PageSkeleton from './components/common/PageSkeleton';
 import './App.css';
@@ -78,6 +80,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           <Link to="/notifications" className="nav-link">اعلان‌ها</Link>
         </div>
         <div className="nav-user">
+          <ThemeToggle />
           <Link to="/profile" className="user-link">
             {user.full_name || user.username}
           </Link>
@@ -126,7 +129,8 @@ function App() {
     <BrowserRouter>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
+          <ThemeProvider>
+            <AuthProvider>
             <Suspense fallback={<PageSkeleton />}>
               <Routes>
           <Route
@@ -231,6 +235,7 @@ function App() {
               </Routes>
             </Suspense>
           </AuthProvider>
+          </ThemeProvider>
         </QueryClientProvider>
       </ErrorBoundary>
     </BrowserRouter>
