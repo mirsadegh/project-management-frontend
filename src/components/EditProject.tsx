@@ -134,11 +134,15 @@ const EditProject: React.FC = () => {
                 type="text"
                 id="name"
                 name="name"
+                maxLength={200}
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="نام پروژه را وارد کنید"
                 required
               />
+              <div className={`char-counter ${formData.name.length > 180 ? 'error' : formData.name.length > 140 ? 'warning' : ''}`}>
+                {formData.name.length}/۲۰۰
+              </div>
             </div>
 
             <div className="form-group">
@@ -146,11 +150,15 @@ const EditProject: React.FC = () => {
               <textarea
                 id="description"
                 name="description"
+                maxLength={1000}
                 value={formData.description}
                 onChange={handleChange}
                 placeholder="پروژه خود را توصیف کنید..."
                 rows={4}
               />
+              <div className={`char-counter ${formData.description.length > 900 ? 'error' : formData.description.length > 700 ? 'warning' : ''}`}>
+                {formData.description.length}/۱۰۰۰
+              </div>
             </div>
 
             <div className="form-row">

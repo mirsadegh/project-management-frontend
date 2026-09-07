@@ -228,21 +228,29 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, create
             <label>نام پروژه *</label>
             <input
               type="text"
+              maxLength={200}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="نام پروژه را وارد کنید"
               required
             />
+            <div className={`char-counter ${formData.name.length > 180 ? 'error' : formData.name.length > 140 ? 'warning' : ''}`}>
+              {formData.name.length}/۲۰۰
+            </div>
           </div>
           
           <div className="form-group">
             <label>توضیحات</label>
             <textarea
+              maxLength={1000}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="توضیحات پروژه را وارد کنید"
               rows={3}
             />
+            <div className={`char-counter ${formData.description.length > 900 ? 'error' : formData.description.length > 700 ? 'warning' : ''}`}>
+              {formData.description.length}/۱۰۰۰
+            </div>
           </div>
           
           <div className="form-row">

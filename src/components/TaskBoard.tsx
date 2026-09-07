@@ -498,12 +498,16 @@ const TaskBoard: React.FC = () => {
                 <label>عنوان</label>
                 <input
                   type="text"
+                  maxLength={300}
                   value={taskForm.title}
                   onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
                   placeholder="عنوان وظیفه"
                   disabled={createTaskMutation.isPending}
                   required
                 />
+                <div className={`char-counter ${taskForm.title.length > 270 ? 'error' : taskForm.title.length > 210 ? 'warning' : ''}`}>
+                  {taskForm.title.length}/۳۰۰
+                </div>
               </div>
               <div className="form-group">
                 <label>توضیحات</label>
@@ -638,12 +642,16 @@ const TaskBoard: React.FC = () => {
                 <label>عنوان *</label>
                 <input
                   type="text"
+                  maxLength={300}
                   value={editTaskForm.title}
                   onChange={(e) => setEditTaskForm({ ...editTaskForm, title: e.target.value })}
                   placeholder="عنوان وظیفه"
                   required
                   disabled={updateTaskMutation.isPending}
                 />
+                <div className={`char-counter ${editTaskForm.title.length > 270 ? 'error' : editTaskForm.title.length > 210 ? 'warning' : ''}`}>
+                  {editTaskForm.title.length}/۳۰۰
+                </div>
               </div>
               <div className="form-group">
                 <label>توضیحات</label>
