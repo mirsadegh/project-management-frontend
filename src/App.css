@@ -621,6 +621,28 @@
   box-shadow: 0 0 0 2px var(--input-focus-shadow);
 }
 
+/* Character counter for inputs */
+.char-counter {
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  text-align: left;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.char-counter.warning {
+  color: var(--warning, #f59e0b);
+}
+
+.char-counter.error {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+[dir='rtl'] .char-counter {
+  text-align: right;
+}
+
 .save-button {
   padding: 0.75rem 2rem;
   background: var(--primary);

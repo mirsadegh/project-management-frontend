@@ -338,11 +338,15 @@ const TaskBoard: React.FC = () => {
             <label>نام لیست</label>
             <input
               type="text"
+              maxLength={100}
               value={listName}
               onChange={(e) => setListName(e.target.value)}
               placeholder="مثلاً: انجام‌نشده"
               disabled={createListMutation.isPending}
             />
+            <div className={`char-counter ${listName.length > 90 ? 'error' : listName.length > 70 ? 'warning' : ''}`}>
+              {listName.length}/۱۰۰
+            </div>
           </div>
           <div className="form-group">
             <label>توضیحات (اختیاری)</label>
@@ -590,12 +594,16 @@ const TaskBoard: React.FC = () => {
                 <label>نام لیست *</label>
                 <input
                   type="text"
+                  maxLength={100}
                   value={editListName}
                   onChange={(e) => setEditListName(e.target.value)}
                   placeholder="نام لیست"
                   required
                   disabled={updateListMutation.isPending}
                 />
+                <div className={`char-counter ${editListName.length > 90 ? 'error' : editListName.length > 70 ? 'warning' : ''}`}>
+                  {editListName.length}/۱۰۰
+                </div>
               </div>
               <div className="form-group">
                 <label>توضیحات (اختیاری)</label>
