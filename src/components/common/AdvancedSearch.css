@@ -50,7 +50,8 @@
 
 .search-clear-btn {
   position: absolute;
-  left: 0.5rem;
+  right: 0.5rem;
+  left: auto;
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -103,8 +104,8 @@
 }
 
 [dir='rtl'] .search-clear-btn {
-  left: auto;
-  right: 0.5rem;
+  right: auto;
+  left: 0.5rem;
 }
 
 /* Responsive */

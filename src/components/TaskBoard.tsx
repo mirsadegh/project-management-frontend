@@ -6,7 +6,7 @@ import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import { taskService, type Task, type TaskList, type TaskFilters } from '../services/taskService';
 import { useProject, useUsers, useProjectTasks } from '../services/queryHooks';
-import { getPriorityLabel, getTaskStatusLabel } from '../utils/labels';
+import { getPriorityLabel, getTaskStatusLabel, toPersianNumerals } from '../utils/labels';
 import { toJalaliDate, fromJalaliDate, formatDateJalali } from '../utils/date';
 import type { ApiError } from '../services/types';
 import { toast } from 'react-toastify';
@@ -392,7 +392,7 @@ const TaskBoard: React.FC = () => {
               disabled={createListMutation.isPending}
             />
             <div className={`char-counter ${listName.length > 90 ? 'error' : listName.length > 70 ? 'warning' : ''}`}>
-              {listName.length}/۱۰۰
+              {toPersianNumerals(listName.length)}/{toPersianNumerals(100)}
             </div>
           </div>
           <div className="form-group">
@@ -553,7 +553,7 @@ const TaskBoard: React.FC = () => {
                   required
                 />
                 <div className={`char-counter ${taskForm.title.length > 270 ? 'error' : taskForm.title.length > 210 ? 'warning' : ''}`}>
-                  {taskForm.title.length}/۳۰۰
+                  {toPersianNumerals(taskForm.title.length)}/{toPersianNumerals(300)}
                 </div>
               </div>
               <div className="form-group">
@@ -653,7 +653,7 @@ const TaskBoard: React.FC = () => {
                   disabled={updateListMutation.isPending}
                 />
                 <div className={`char-counter ${editListName.length > 90 ? 'error' : editListName.length > 70 ? 'warning' : ''}`}>
-                  {editListName.length}/۱۰۰
+                  {toPersianNumerals(editListName.length)}/{toPersianNumerals(100)}
                 </div>
               </div>
               <div className="form-group">
@@ -697,7 +697,7 @@ const TaskBoard: React.FC = () => {
                   disabled={updateTaskMutation.isPending}
                 />
                 <div className={`char-counter ${editTaskForm.title.length > 270 ? 'error' : editTaskForm.title.length > 210 ? 'warning' : ''}`}>
-                  {editTaskForm.title.length}/۳۰۰
+                  {toPersianNumerals(editTaskForm.title.length)}/{toPersianNumerals(300)}
                 </div>
               </div>
               <div className="form-group">

@@ -6,7 +6,7 @@ import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import { projectService, type Project } from '../services/projectService';
 import { useProjectSearch } from '../services/queryHooks';
-import { getStatusLabel, getPriorityLabel, formatDate } from '../utils/labels';
+import { getStatusLabel, getPriorityLabel, formatDate, toPersianNumerals } from '../utils/labels';
 import { toJalaliDate, fromJalaliDate } from '../utils/date';
 import type { ApiError } from '../services/types';
 import type { UseMutationResult } from '@tanstack/react-query';
@@ -32,6 +32,7 @@ const ProjectsList: React.FC = () => {
     mutationFn: (data: Partial<Project>) => projectService.createProject(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['projects-search'] });
     },
     onError: (err: ApiError) => {
       console.error(err.response?.data?.detail || 'ایجاد پروژه ناموفق بود');
@@ -219,12 +220,29 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, create
     e.preventDefault();
     setError(null);
 
+    // Client-side date validation
+    if (formData.start_date && formData.due_date) {
+      const start = new Date(formData.start_date);
+      const due = new Date(formData.due_date);
+      if (due < start) {
+        setError('تاریخ مهلت کمتر از تاریخ شروع بود');
+        return;
+      }
+    }
+
     try {
       await createMutation.mutateAsync(formData);
       onClose();
     } catch (err) {
       const apiErr = err as ApiError;
-      setError(apiErr.response?.data?.detail || 'ایجاد پروژه ناموفق بود');
+      const detail = apiErr.response?.data?.detail;
+      if (apiErr.response?.data?.due_date) {
+        setError('تاریخ مهلت کمتر از تاریخ شروع بود');
+      } else if (typeof detail === 'string') {
+        setError(detail);
+      } else {
+        setError('ایجاد پروژه ناموفق بود');
+      }
     }
   };
 
@@ -237,7 +255,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, create
         </div>
         
         <form onSubmit={handleSubmit}>
-          {error && <div className="error-message">{(error as ApiError).response?.data?.detail || 'بارگذاری پروژه‌ها ناموفق بود'}</div>}
+          {error && <div className="error-message">{error}</div>}
           
           <div className="form-group">
             <label>نام پروژه *</label>
@@ -250,7 +268,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, create
               required
             />
             <div className={`char-counter ${formData.name.length > 180 ? 'error' : formData.name.length > 140 ? 'warning' : ''}`}>
-              {formData.name.length}/۲۰۰
+              {toPersianNumerals(formData.name.length)}/{toPersianNumerals(200)}
             </div>
           </div>
           
@@ -264,7 +282,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, create
               rows={3}
             />
             <div className={`char-counter ${formData.description.length > 900 ? 'error' : formData.description.length > 700 ? 'warning' : ''}`}>
-              {formData.description.length}/۱۰۰۰
+              {toPersianNumerals(formData.description.length)}/{toPersianNumerals(1000)}
             </div>
           </div>
           
@@ -297,6 +315,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, create
                 containerClassName="date-picker-container"
                 format="YYYY/MM/DD"
                 placeholder="انتخاب تاریخ"
+                minDate={new Date()}
               />
             </div>
             <div className="form-group">
@@ -312,6 +331,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, create
                 containerClassName="date-picker-container"
                 format="YYYY/MM/DD"
                 placeholder="انتخاب تاریخ"
+                minDate={formData.start_date ? new Date(formData.start_date) : new Date()}
               />
             </div>
           </div>

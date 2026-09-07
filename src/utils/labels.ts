@@ -78,3 +78,9 @@ export function formatDateTime(dateString?: string | null): string {
 // Re-export Jalali utilities for use in components
 export { toJalali, toDate, toGregorianString, toJalaliDate, fromJalaliDate } from './date';
 export type { JalaliDate } from './date';
+
+// Persian numeral helper for character counters
+export function toPersianNumerals(num: number | string): string {
+  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  return String(num).replace(/\d/g, (d) => persianDigits[parseInt(d)]);
+}

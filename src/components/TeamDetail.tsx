@@ -1,17 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
 import { teamService, type Team, type TeamMembership } from '../services/teamService';
 import { getRoleLabel } from '../utils/labels';
 import type { ApiError } from '../services/types';
+
 const TeamDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
   const [team, setTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<TeamMembership[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'members' | 'projects' | 'invitations'>('members');
 
-  useEffect(() => {
+  // Edit modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editFormData, setEditFormData] = useState({ name: '', description: '' });
+
+  // Invite modal state
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteFormData, setInviteFormData] = useState({ username_or_email: '', role: 'MEMBER' });
+
+  // Load team on mount
+  React.useEffect(() => {
     if (id) {
       loadTeam(id);
     }
@@ -32,6 +45,36 @@ const TeamDetail: React.FC = () => {
     }
   };
 
+  // Update team mutation
+  const updateTeamMutation = useMutation({
+    mutationFn: (data: { name: string; description: string }) =>
+      teamService.updateTeam(id!, data),
+    onSuccess: (updatedTeam) => {
+      setTeam(updatedTeam);
+      setShowEditModal(false);
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      toast.success('تیم با موفقیت به‌روزرسانی شد');
+    },
+    onError: (err: ApiError) => {
+      toast.error(err.response?.data?.detail || 'به‌روزرسانی تیم ناموفق بود');
+    },
+  });
+
+  // Invite member mutation
+  const inviteMemberMutation = useMutation({
+    mutationFn: (data: { username_or_email: string; role: string }) =>
+      teamService.inviteMember(Number(id), data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      setShowInviteModal(false);
+      setInviteFormData({ username_or_email: '', role: 'MEMBER' });
+      toast.success('عضو با موفقیت اضافه شد');
+    },
+    onError: (err: ApiError) => {
+      toast.error(err.response?.data?.detail || 'افزودن عضو ناموفق بود');
+    },
+  });
+
   if (loading) {
     return <div className="page-loading">در حال بارگذاری تیم...</div>;
   }
@@ -49,8 +92,21 @@ const TeamDetail: React.FC = () => {
             <h1>{team.name}</h1>
           </div>
           <div className="team-actions">
-            <button className="action-btn">ویرایش</button>
-            <button className="action-btn secondary">دعوت عضو</button>
+            <button
+              className="action-btn"
+              onClick={() => {
+                setEditFormData({ name: team.name, description: team.description || '' });
+                setShowEditModal(true);
+              }}
+            >
+              ویرایش
+            </button>
+            <button
+              className="action-btn secondary"
+              onClick={() => setShowInviteModal(true)}
+            >
+              دعوت عضو
+            </button>
           </div>
         </div>
         <p className="team-description">{team.description || 'بدون توضیحات'}</p>
@@ -122,6 +178,98 @@ const TeamDetail: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Team Modal */}
+      {showEditModal && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>ویرایش تیم</h2>
+              <button className="close-btn" onClick={() => setShowEditModal(false)}>×</button>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateTeamMutation.mutate(editFormData);
+              }}
+            >
+              <div className="form-group">
+                <label>نام تیم</label>
+                <input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>توضیحات</label>
+                <textarea
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  rows={4}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setShowEditModal(false)}>
+                  انصراف
+                </button>
+                <button type="submit" className="btn-primary" disabled={updateTeamMutation.isPending}>
+                  {updateTeamMutation.isPending ? 'در حال ذخیره...' : 'ذخیره'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Invite Member Modal */}
+      {showInviteModal && (
+        <div className="modal-overlay" onClick={() => setShowInviteModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>افزودن عضو جدید</h2>
+              <button className="close-btn" onClick={() => setShowInviteModal(false)}>×</button>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                inviteMemberMutation.mutate(inviteFormData);
+              }}
+            >
+              <div className="form-group">
+                <label>ایمیل یا نام کاربری</label>
+                <input
+                  type="text"
+                  value={inviteFormData.username_or_email}
+                  onChange={(e) => setInviteFormData({ ...inviteFormData, username_or_email: e.target.value })}
+                  placeholder="username یا email@example.com"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>نقش</label>
+                <select
+                  value={inviteFormData.role}
+                  onChange={(e) => setInviteFormData({ ...inviteFormData, role: e.target.value })}
+                >
+                  <option value="MEMBER">عضو</option>
+                  <option value="CO_LEAD">هم‌سرپرست</option>
+                  <option value="LEAD">سرپرست</option>
+                </select>
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setShowInviteModal(false)}>
+                  انصراف
+                </button>
+                <button type="submit" className="btn-primary" disabled={inviteMemberMutation.isPending}>
+                  {inviteMemberMutation.isPending ? 'در حال افزودن...' : 'افزودن عضو'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { projectService } from '../services/projectService';
 import { useAuth } from '../services/contexts/AuthContext';
+import { toPersianNumerals } from '../utils/labels';
 import type { ApiError } from '../services/types';
 const EditProject: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -141,7 +142,7 @@ const EditProject: React.FC = () => {
                 required
               />
               <div className={`char-counter ${formData.name.length > 180 ? 'error' : formData.name.length > 140 ? 'warning' : ''}`}>
-                {formData.name.length}/۲۰۰
+                {toPersianNumerals(formData.name.length)}/{toPersianNumerals(200)}
               </div>
             </div>
 
@@ -157,7 +158,7 @@ const EditProject: React.FC = () => {
                 rows={4}
               />
               <div className={`char-counter ${formData.description.length > 900 ? 'error' : formData.description.length > 700 ? 'warning' : ''}`}>
-                {formData.description.length}/۱۰۰۰
+                {toPersianNumerals(formData.description.length)}/{toPersianNumerals(1000)}
               </div>
             </div>
 

@@ -1,5 +1,5 @@
-import React from 'react';
-import { useDebouncedCallback } from '../../hooks/useDebouncedCallback';
+import React, { useState, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import type { SearchFilters } from '../../services/projectService';
 import './AdvancedSearch.css';
 
@@ -19,11 +19,23 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
   statusOptions = [],
   sortOptions = [],
 }) => {
-  const debouncedChange = useDebouncedCallback(onFiltersChange, 300);
+  // Local state for instant UI feedback while typing
+  const [localQuery, setLocalQuery] = useState(filters.query ?? '');
 
-  const handleQueryChange = (query: string) => {
-    debouncedChange({ ...filters, query });
-  };
+  // Sync local state when parent clears the search (e.g., via clear button)
+  useEffect(() => {
+    setLocalQuery(filters.query ?? '');
+  }, [filters.query]);
+
+  // Debounce local query to avoid excessive API calls
+  const debouncedQuery = useDebounce(localQuery, 300);
+
+  // Notify parent only when debounced value differs from current parent value
+  useEffect(() => {
+    if (debouncedQuery !== filters.query) {
+      onFiltersChange({ ...filters, query: debouncedQuery });
+    }
+  }, [debouncedQuery]);
 
   return (
     <div className="advanced-search" role="search">
@@ -31,15 +43,18 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
         <input
           type="text"
           className="search-input"
-          value={filters.query ?? ''}
-          onChange={(e) => handleQueryChange(e.target.value)}
+          value={localQuery}
+          onChange={(e) => setLocalQuery(e.target.value)}
           placeholder={searchPlaceholder}
           aria-label="جستجو"
         />
-        {filters.query && (
+        {localQuery && (
           <button
             className="search-clear-btn"
-            onClick={() => onFiltersChange({ ...filters, query: '' })}
+            onClick={() => {
+              setLocalQuery('');
+              onFiltersChange({ ...filters, query: '' });
+            }}
             aria-label="پاک کردن جستجو"
           >
             ✕

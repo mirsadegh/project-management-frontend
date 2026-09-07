@@ -147,6 +147,11 @@ export interface TeamPerformanceReport {
 }
 
 export const teamService = {
+  async getUserByEmail(email: string): Promise<UserSummary> {
+    const response = await api.get<UserSummary>(`/users/by-email/?email=${encodeURIComponent(email)}`);
+    return response.data;
+  },
+
   async getTeams(): Promise<Team[]> {
     const response = await api.get<PaginatedTeamsResponse>('/teams/teams/');
     return response.data.results;
@@ -181,6 +186,11 @@ export const teamService = {
       '/teams/team-invitations/'
     );
     return unwrapList(response.data);
+  },
+
+  async inviteMember(teamId: number, data: { username_or_email: string; role: string }): Promise<TeamMembership> {
+    const response = await api.post<TeamMembership>(`/teams/teams/${teamId}/invite_member/`, data);
+    return response.data;
   },
 
   async inviteToTeam(teamId: number, userId: number, role: string, message = ''): Promise<TeamInvitation> {
