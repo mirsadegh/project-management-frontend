@@ -72,6 +72,15 @@ export interface ProjectFilters {
   search?: string;
 }
 
+export interface SearchFilters {
+  query?: string;
+  status?: string;
+  owner?: string;
+  manager?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
 export interface PaginatedProjectsResponse {
   pagination: {
     count: number;
@@ -90,6 +99,23 @@ export const projectService = {
     if (filters?.status) params.append('status', filters.status);
     if (filters?.priority) params.append('priority', filters.priority);
     if (filters?.search) params.append('search', filters.search);
+
+    const response = await api.get<PaginatedProjectsResponse>(`/projects/projects/?${params.toString()}`);
+    return response.data.projects;
+  },
+
+  async searchProjects(filters: SearchFilters): Promise<Project[]> {
+    const params = new URLSearchParams();
+
+    if (filters.query) params.append('search', filters.query);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.owner) params.append('owner', filters.owner);
+    if (filters.manager) params.append('manager', filters.manager);
+
+    if (filters.sortBy) {
+      const orderPrefix = filters.sortOrder === 'desc' ? '-' : '';
+      params.append('ordering', `${orderPrefix}${filters.sortBy}`);
+    }
 
     const response = await api.get<PaginatedProjectsResponse>(`/projects/projects/?${params.toString()}`);
     return response.data.projects;

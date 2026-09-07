@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import DatePicker from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
-import { taskService, type Task, type TaskList } from '../services/taskService';
+import { taskService, type Task, type TaskList, type TaskFilters } from '../services/taskService';
 import { useProject, useUsers, useProjectTasks } from '../services/queryHooks';
 import { getPriorityLabel, getTaskStatusLabel } from '../utils/labels';
 import { toJalaliDate, fromJalaliDate, formatDateJalali } from '../utils/date';
 import type { ApiError } from '../services/types';
 import { toast } from 'react-toastify';
 import type { Value } from 'react-multi-date-picker';
+import AdvancedSearch from './common/AdvancedSearch';
 
 const PRIORITIES: Task['priority'][] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 const STATUSES: Task['status'][] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'COMPLETED', 'BLOCKED'];
@@ -75,6 +76,34 @@ const TaskBoard: React.FC = () => {
 
   // Delete confirmation state
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'task' | 'list'; id: number; name: string } | null>(null);
+
+  // Search/filter state
+  const [taskFilters, setTaskFilters] = useState<TaskFilters>({
+    query: '',
+    status: '',
+    priority: '',
+  });
+
+  // Filtered task lists (client-side search within kanban columns)
+  const filteredTaskLists = useMemo(() => {
+    if (!taskFilters.query && !taskFilters.status && !taskFilters.priority) {
+      return taskLists;
+    }
+    const q = taskFilters.query?.toLowerCase() ?? '';
+    return taskLists
+      .map((list) => ({
+        ...list,
+        tasks: list.tasks?.filter((task) => {
+          if (q && !task.title.toLowerCase().includes(q) && !task.description?.toLowerCase().includes(q)) {
+            return false;
+          }
+          if (taskFilters.status && task.status !== taskFilters.status) return false;
+          if (taskFilters.priority && task.priority !== taskFilters.priority) return false;
+          return true;
+        }),
+      }))
+      .filter((list) => list.tasks.length > 0 || !taskFilters.query);
+  }, [taskLists, taskFilters]);
 
   // ─── Mutations ───────────────────────────────────────────────────────────────
 
@@ -330,6 +359,24 @@ const TaskBoard: React.FC = () => {
         </div>
       </div>
 
+      <AdvancedSearch
+        filters={taskFilters}
+        onFiltersChange={setTaskFilters}
+        searchPlaceholder="جستجو در وظایف..."
+        statusOptions={[
+          { value: 'TODO', label: 'انجام‌نشده' },
+          { value: 'IN_PROGRESS', label: 'در حال انجام' },
+          { value: 'IN_REVIEW', label: 'در حال بررسی' },
+          { value: 'COMPLETED', label: 'تکمیل‌شده' },
+          { value: 'BLOCKED', label: 'مسدودشده' },
+        ]}
+        sortOptions={[
+          { value: 'priority', label: 'اولویت' },
+          { value: 'due_date', label: 'مهلت' },
+          { value: 'title', label: 'عنوان' },
+        ]}
+      />
+
       {/* Create list form */}
       {showListForm && (
         <form className="create-list-form" onSubmit={handleCreateList}>
@@ -378,7 +425,7 @@ const TaskBoard: React.FC = () => {
         </div>
       ) : (
         <div className="task-board">
-          {taskLists.map((list) => (
+          {filteredTaskLists.map((list) => (
             <div key={list.id} className="task-column">
               {/* Column header with edit/delete actions */}
               <div className="column-header">

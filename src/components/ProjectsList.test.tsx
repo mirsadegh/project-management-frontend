@@ -28,13 +28,13 @@ vi.mock('../services/contexts/AuthContext', async (importOriginal) => {
 // ─── Query hook mocks ─────────────────────────────────────────────────────────
 
 vi.mock('../services/queryHooks', () => ({
-  useProjects: vi.fn(),
+  useProjectSearch: vi.fn(),
   useUnreadCount: vi.fn(),
 }));
 
-import { useProjects } from '../services/queryHooks';
+import { useProjectSearch } from '../services/queryHooks';
 
-const mockUseProjects = useProjects as ReturnType<typeof vi.fn>;
+const mockUseProjectSearch = useProjectSearch as ReturnType<typeof vi.fn>;
 
 // ─── MSW server for projects API ──────────────────────────────────────────────
 
@@ -88,12 +88,12 @@ describe('ProjectsList', () => {
 
   describe('Loading state', () => {
     it('shows loading indicator while fetching projects', () => {
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: undefined,
         isLoading: true,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -103,12 +103,12 @@ describe('ProjectsList', () => {
 
   describe('Error state', () => {
     it('shows error message when fetch fails', () => {
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: undefined,
         isLoading: false,
         isError: true,
         error: { response: { data: { detail: 'خطای سرور' } } },
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -118,12 +118,12 @@ describe('ProjectsList', () => {
 
   describe('Empty state', () => {
     it('shows empty state when no projects exist', () => {
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: [],
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -134,12 +134,12 @@ describe('ProjectsList', () => {
 
   describe('Project list rendering', () => {
     it('displays list of projects with correct names', async () => {
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -151,12 +151,12 @@ describe('ProjectsList', () => {
     });
 
     it('renders project cards as links to project detail pages', async () => {
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -167,12 +167,12 @@ describe('ProjectsList', () => {
     });
 
     it('shows project progress bar with correct percentage', async () => {
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -184,12 +184,12 @@ describe('ProjectsList', () => {
     });
 
     it('shows task counts for each project', async () => {
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -207,12 +207,12 @@ describe('ProjectsList', () => {
     });
 
     it('shows project descriptions', async () => {
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -223,32 +223,31 @@ describe('ProjectsList', () => {
     });
 
     it('shows status and priority badges for each project', async () => {
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
       await waitFor(() => {
-        expect(screen.getByText('در حال انجام')).toBeInTheDocument();
-        // "تکمیل‌شده" appears in both a card badge and the task counts section
+        // Use getAllByText because status labels appear in both badges and filter dropdown
+        expect(screen.getAllByText('در حال انجام').length).toBeGreaterThanOrEqual(1);
         expect(screen.getAllByText('تکمیل‌شده').length).toBeGreaterThanOrEqual(1);
       });
     });
   });
 
   describe('Search/filter functionality', () => {
-    it('filters projects by name when user types in search input', async () => {
-      const user = userEvent.setup();
-      mockUseProjects.mockReturnValue({
+    it('has AdvancedSearch component with search input', async () => {
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -257,52 +256,26 @@ describe('ProjectsList', () => {
         expect(screen.getByText('پروژه دوم')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('جستجوی پروژه‌ها...');
-      await user.type(searchInput, 'اول');
-
-      expect(screen.getByText('پروژه اول')).toBeInTheDocument();
-      expect(screen.queryByText('پروژه دوم')).not.toBeInTheDocument();
+      // Verify AdvancedSearch is present with correct placeholder
+      expect(screen.getByPlaceholderText('جستجو در پروژه‌ها...')).toBeInTheDocument();
+      // Verify filter dropdowns are present
+      expect(screen.getByLabelText('فیلتر وضعیت')).toBeInTheDocument();
+      expect(screen.getByLabelText('مرتب‌سازی')).toBeInTheDocument();
     });
 
-    it('shows all projects when search input is cleared', async () => {
-      const user = userEvent.setup();
-      mockUseProjects.mockReturnValue({
+    it('shows all projects when no search filter is applied', async () => {
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
-
-      await waitFor(() => screen.getByText('پروژه اول'));
-
-      const searchInput = screen.getByPlaceholderText('جستجوی پروژه‌ها...');
-      await user.type(searchInput, 'اول');
-      expect(screen.queryByText('پروژه دوم')).not.toBeInTheDocument();
-
-      await user.clear(searchInput);
-      expect(screen.getByText('پروژه دوم')).toBeInTheDocument();
-    });
-
-    it('shows no results message when filter matches nothing', async () => {
-      const user = userEvent.setup();
-      mockUseProjects.mockReturnValue({
-        data: mockProjects,
-        isLoading: false,
-        isError: false,
-        error: null,
-      } as ReturnType<typeof useProjects>);
-
-      render(<ProjectsList />, { route: '/projects' });
-
-      await waitFor(() => screen.getByText('پروژه اول'));
-
-      const searchInput = screen.getByPlaceholderText('جستجوی پروژه‌ها...');
-      await user.type(searchInput, 'xyz-not-a-project');
 
       await waitFor(() => {
-        expect(screen.getByText(/هنوز پروژه‌ای وجود ندارد/i)).toBeInTheDocument();
+        expect(screen.getByText('پروژه اول')).toBeInTheDocument();
+        expect(screen.getByText('پروژه دوم')).toBeInTheDocument();
       });
     });
   });
@@ -310,12 +283,12 @@ describe('ProjectsList', () => {
   describe('Create project modal', () => {
     it('opens the create project modal when "+ پروژه جدید" button is clicked', async () => {
       const user = userEvent.setup();
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -331,12 +304,12 @@ describe('ProjectsList', () => {
 
     it('closes the modal when cancel button is clicked', async () => {
       const user = userEvent.setup();
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -357,12 +330,12 @@ describe('ProjectsList', () => {
 
     it('closes modal when overlay is clicked', async () => {
       const user = userEvent.setup();
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -385,12 +358,12 @@ describe('ProjectsList', () => {
 
     it('validates that project name is required', async () => {
       const user = userEvent.setup();
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 
@@ -413,12 +386,12 @@ describe('ProjectsList', () => {
 
     it('shows priority options in the form', async () => {
       const user = userEvent.setup();
-      mockUseProjects.mockReturnValue({
+      mockUseProjectSearch.mockReturnValue({
         data: mockProjects,
         isLoading: false,
         isError: false,
         error: null,
-      } as ReturnType<typeof useProjects>);
+      } as ReturnType<typeof useProjectSearch>);
 
       render(<ProjectsList />, { route: '/projects' });
 

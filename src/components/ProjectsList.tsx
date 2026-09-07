@@ -5,19 +5,28 @@ import DatePicker from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import { projectService, type Project } from '../services/projectService';
-import { useProjects } from '../services/queryHooks';
+import { useProjectSearch } from '../services/queryHooks';
 import { getStatusLabel, getPriorityLabel, formatDate } from '../utils/labels';
 import { toJalaliDate, fromJalaliDate } from '../utils/date';
 import type { ApiError } from '../services/types';
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { Value } from 'react-multi-date-picker';
+import AdvancedSearch from './common/AdvancedSearch';
+import type { SearchFilters } from '../services/projectService';
 
 const ProjectsList: React.FC = () => {
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const { data: projects = [], isLoading, error } = useProjects();
+  const [filters, setFilters] = useState<SearchFilters>({
+    query: '',
+    status: '',
+    owner: '',
+    sortBy: 'created_at',
+    sortOrder: 'desc',
+  });
+
+  const { data: projects = [], isLoading, error } = useProjectSearch(filters);
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<Project>) => projectService.createProject(data),
@@ -50,11 +59,6 @@ const ProjectsList: React.FC = () => {
     }
   };
 
-  const filteredProjects = projects.filter((project) =>
-    project.name.toLowerCase().includes(filter.toLowerCase()) ||
-    project.description.toLowerCase().includes(filter.toLowerCase())
-  );
-
   if (isLoading) {
     return <div className="page-loading">در حال بارگذاری پروژه‌ها...</div>;
   }
@@ -67,22 +71,33 @@ const ProjectsList: React.FC = () => {
           <p className="page-subtitle">مدیریت و پیگیری تمام پروژه‌های شما</p>
         </div>
         <div className="header-actions">
-          <input
-            type="text"
-            placeholder="جستجوی پروژه‌ها..."
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="search-input"
-          />
           <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
             + پروژه جدید
           </button>
         </div>
       </div>
 
+      <AdvancedSearch
+        filters={filters}
+        onFiltersChange={setFilters}
+        searchPlaceholder="جستجو در پروژه‌ها..."
+        statusOptions={[
+          { value: 'PLANNING', label: 'برنامه‌ریزی' },
+          { value: 'IN_PROGRESS', label: 'در حال انجام' },
+          { value: 'ON_HOLD', label: 'متوقف' },
+          { value: 'COMPLETED', label: 'تکمیل‌شده' },
+          { value: 'CANCELLED', label: 'لغوشده' },
+        ]}
+        sortOptions={[
+          { value: 'created_at', label: 'تاریخ ایجاد' },
+          { value: 'name', label: 'نام' },
+          { value: 'due_date', label: 'مهلت' },
+        ]}
+      />
+
       {error && <div className="error-message">{(error as ApiError).response?.data?.detail || 'بارگذاری پروژه‌ها ناموفق بود'}</div>}
 
-      {filteredProjects.length === 0 ? (
+      {projects.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📋</div>
           <h3>هنوز پروژه‌ای وجود ندارد</h3>
@@ -93,7 +108,7 @@ const ProjectsList: React.FC = () => {
         </div>
       ) : (
         <div className="projects-grid">
-          {filteredProjects.map((project) => (
+          {projects.map((project) => (
             <Link to={`/projects/${project.slug}`} key={project.id} className="project-card">
               <div className="project-card-header">
                 <h3 className="project-name">{project.name}</h3>

@@ -51,6 +51,7 @@ export interface TaskLabel {
 }
 
 export interface TaskFilters {
+  query?: string;
   status?: string;
   priority?: string;
   assignee?: number;
@@ -108,6 +109,17 @@ export const taskService = {
     if (filters?.assignee) params.append('assignee', filters.assignee.toString());
 
     const response = await api.get<PaginatedTaskResponse>(`/tasks/tasks/?project=${projectId}&${params.toString()}`);
+    return response.data.tasks ?? response.data.results;
+  },
+
+  async searchTasks(projectId: number, filters: TaskFilters): Promise<Task[]> {
+    const params = new URLSearchParams({ project: projectId.toString() });
+    if (filters.query) params.append('search', filters.query);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.priority) params.append('priority', filters.priority);
+    if (filters.assignee) params.append('assignee', filters.assignee.toString());
+
+    const response = await api.get<PaginatedTaskResponse>(`/tasks/tasks/?${params.toString()}`);
     return response.data.tasks ?? response.data.results;
   },
 

@@ -1,10 +1,12 @@
 // src/services/queryHooks.ts
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { projectService } from './projectService';
 import { taskService } from './taskService';
+import type { TaskFilters } from './taskService';
 import { teamService } from './teamService';
 import { notificationService } from './notificationService';
 import { authService } from './authService';
+import type { SearchFilters } from './projectService';
 
 export const useProjects = () =>
   useQuery({
@@ -48,5 +50,20 @@ export const useProjectTasks = (projectId: number | undefined) =>
   useQuery({
     queryKey: ['project-tasks', projectId],
     queryFn: () => taskService.getTaskLists(projectId!),
+    enabled: !!projectId,
+  });
+
+export const useProjectSearch = (filters: SearchFilters) =>
+  useQuery({
+    queryKey: ['projects-search', filters],
+    queryFn: () => projectService.searchProjects(filters),
+    placeholderData: keepPreviousData,
+  });
+
+export const useTaskSearch = (projectId: number | undefined, filters: TaskFilters) =>
+  useQuery({
+    queryKey: ['tasks-search', projectId, filters],
+    queryFn: () => taskService.searchTasks(projectId!, filters),
+    placeholderData: keepPreviousData,
     enabled: !!projectId,
   });
