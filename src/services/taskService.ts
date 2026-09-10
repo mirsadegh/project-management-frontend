@@ -73,7 +73,6 @@ export interface PaginatedTaskResponse {
   total_pages: number;
   current_page: number;
   results: Task[];
-  tasks?: Task[];
 }
 
 export interface PaginatedTaskLabelResponse {
@@ -109,7 +108,7 @@ export const taskService = {
     if (filters?.assignee) params.append('assignee', filters.assignee.toString());
 
     const response = await api.get<PaginatedTaskResponse>(`/tasks/tasks/?project=${projectId}&${params.toString()}`);
-    return response.data.tasks ?? response.data.results;
+    return response.data.results;
   },
 
   async searchTasks(projectId: number, filters: TaskFilters): Promise<Task[]> {
@@ -120,7 +119,7 @@ export const taskService = {
     if (filters.assignee) params.append('assignee', filters.assignee.toString());
 
     const response = await api.get<PaginatedTaskResponse>(`/tasks/tasks/?${params.toString()}`);
-    return response.data.tasks ?? response.data.results;
+    return response.data.results;
   },
 
   async getTask(taskId: number): Promise<Task> {
@@ -164,7 +163,7 @@ export const taskService = {
     const response = await api.get<PaginatedTaskResponse>(
       `/tasks/tasks/my_tasks/${query ? `?${query}` : ''}`
     );
-    return response.data.tasks ?? response.data.results;
+    return response.data.results;
   },
 
   async getAllTasks(limit = 20, offset = 0): Promise<Task[]> {
