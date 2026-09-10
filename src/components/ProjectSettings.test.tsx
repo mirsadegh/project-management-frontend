@@ -3,9 +3,8 @@ import React from 'react';
 import { render, screen, waitFor } from '../tests/test-utils';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
-import { createMemoryRouter, RouterProvider, Outlet } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '../services/contexts/AuthContext';
+// Router/Auth providers are supplied by tests/test-utils customRender;
+// no direct react-router-dom imports needed here.
 import ProjectSettings from './ProjectSettings';
 import { useAuth } from '../services/contexts/AuthContext';
 import { projectService } from '../services/projectService';
@@ -128,11 +127,6 @@ const devUser = {
   last_login: '2024-06-01T00:00:00Z',
 };
 
-const AllTheProviders = ({ children }: { children: React.ReactNode }) => (
-  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-    <AuthProvider>{children}</AuthProvider>
-  </QueryClientProvider>
-);
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 

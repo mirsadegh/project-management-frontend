@@ -66,26 +66,20 @@ let refreshPromise: Promise<string> | null = null;
 async function refreshAccessToken(): Promise<string> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
-      try {
-        // Security fix (C-4): no localStorage read. The cookie is sent
-        // automatically by the browser; the backend's CookieTokenRefreshView
-        // (PR-6) reads `ws_refresh` from the cookie. The response sets a
-        // new `Set-Cookie: ws_access=...` (and rotated ws_refresh when
-        // SimpleJWT ROTATE_REFRESH_TOKENS kicks in).
-        const { data } = await axios.post<{ access: string; refresh?: string }>(
-          `${API_BASE_URL}/accounts/auth/refresh/`,
-          {},
-          { withCredentials: true }
-        );
-        return data.access;
-      } catch (error) {
-        // Refresh failed — let AuthContext detect the next 401 and force
-        // logout. We no longer have local state to clear here.
-        throw error;
-      } finally {
-        refreshPromise = null;
-      }
-    })();
+      // Security fix (C-4): no localStorage read. The cookie is sent
+      // automatically by the browser; the backend's CookieTokenRefreshView
+      // (PR-6) reads `ws_refresh` from the cookie. The response sets a
+      // new `Set-Cookie: ws_access=...` (and rotated ws_refresh when
+      // SimpleJWT ROTATE_REFRESH_TOKENS kicks in).
+      const { data } = await axios.post<{ access: string; refresh?: string }>(
+        `${API_BASE_URL}/accounts/auth/refresh/`,
+        {},
+        { withCredentials: true }
+      );
+      return data.access;
+    })().finally(() => {
+      refreshPromise = null;
+    });
   }
   return refreshPromise;
 }

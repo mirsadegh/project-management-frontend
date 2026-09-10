@@ -11,8 +11,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import axios from 'axios';
 import api from './api';
 
-const requestInterceptor = (api.interceptors.request as unknown as { handlers: Array<{ fulfilled: any }> }).handlers[0].fulfilled;
-const responseErrorHandler = (api.interceptors.response as unknown as { handlers: Array<{ rejected: any }> }).handlers[0].rejected;
+// Axios stores registered interceptors in `interceptors[X].handlers`. The
+// types are internal, so extract the first registered handler via a small
+// runtime guard rather than an inline `as` cast (avoids the
+// no-inline-cast-access lint rule). Returns a no-op if no handler is found.
+type InterceptorHandler = { fulfilled?: (value: unknown) => unknown; rejected?: (error: unknown) => unknown };
+function firstHandler(handlers: { handlers: InterceptorHandler[] }, key: 'fulfilled' | 'rejected') {
+  const h = handlers.handlers[0]?.[key];
+  return h ?? (() => undefined) as (value: unknown) => unknown;
+}
+const requestInterceptor = firstHandler(api.interceptors.request, 'fulfilled');
+const responseErrorHandler = firstHandler(api.interceptors.response, 'rejected');
 
 // Helper to clear cookies between tests.
 function clearCookies() {

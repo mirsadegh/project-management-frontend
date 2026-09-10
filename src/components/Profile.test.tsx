@@ -1,6 +1,6 @@
 // src/components/Profile.test.tsx
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '../tests/test-utils';
+import { render, screen, waitFor } from '../tests/test-utils';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import Profile from './Profile';

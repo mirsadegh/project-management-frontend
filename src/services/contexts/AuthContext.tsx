@@ -77,6 +77,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- custom hook export is intentional
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {

@@ -3,9 +3,8 @@ import React from 'react';
 import { render, screen, waitFor } from '../tests/test-utils';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
-import { createMemoryRouter, RouterProvider, Outlet } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '../services/contexts/AuthContext';
+// Router setup is provided by tests/test-utils customRender; no direct
+// react-router-dom imports needed here.
 import EditProject from './EditProject';
 import { useAuth } from '../services/contexts/AuthContext';
 import { projectService } from '../services/projectService';
@@ -126,39 +125,6 @@ const devUser = {
   date_joined: '2024-01-01T00:00:00Z',
   last_login: '2024-06-01T00:00:00Z',
 };
-
-const renderWithAuth = (ui: React.ReactElement, user: typeof adminUser) => {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-
-  mockUseAuth.mockReturnValue({
-    user,
-    loading: false,
-    login: vi.fn(),
-    logout: vi.fn(),
-    register: vi.fn(),
-  });
-
-  const router = createMemoryRouter(
-    [
-      {
-        path: '/',
-        element: <AllTheProviders>{ui}</AllTheProviders>,
-        children: [
-          { path: 'projects/:id/edit', element: ui },
-        ],
-      },
-    ],
-    { initialEntries: ['/projects/porojekt-avval/edit'] }
-  );
-
-  return render(<RouterProvider router={router} />);
-};
-
-const AllTheProviders = ({ children }: { children: React.ReactNode }) => (
-  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-    <AuthProvider>{children}</AuthProvider>
-  </QueryClientProvider>
-);
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 

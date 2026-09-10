@@ -1,14 +1,11 @@
 // src/components/ProjectDetail.test.tsx
 import React, { act } from 'react';
-import { render, screen, waitFor, within, fireEvent } from '../tests/test-utils';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor, within } from '../tests/test-utils';
 import { vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import ProjectDetail from './ProjectDetail';
-import { mockProjects } from '../tests/mockData';
-
-// ─── Mock AuthContext ─────────────────────────────────────────────────────────
 
 vi.mock('../services/contexts/AuthContext', async (importOriginal) => {
   const actual = await importOriginal();
@@ -36,9 +33,14 @@ vi.mock('../services/queryHooks', () => ({
 
 // ─── Shared mutable data store ─────────────────────────────────────────────────
 
+// Minimal in-file types so the test fixtures never rely on `any`.
+interface TestUser { id: number; username: string; email: string; full_name: string; }
+interface TestMember { id: number; user: TestUser | { id: number; username?: string; email?: string; full_name?: string }; role: string; }
+interface TestProject { id: number; slug: string; name: string; members: TestMember[]; }
+
 export const sharedData = {
-  project: null as any,
-  users: [] as any[],
+  project: null as TestProject | null,
+  users: [] as TestUser[],
 };
 
 // ─── MSW server ───────────────────────────────────────────────────────────────
@@ -72,24 +74,24 @@ export const projectDetailHandlers = [
   }),
   http.post(`${API_BASE}/projects/projects/test-project/add_member/`, async ({ request }) => {
     const body = await request.json() as Record<string, unknown>;
-    const user = sharedData.users.find((u: any) => u.id === body.user_id);
+    const user = sharedData.users.find((u: TestUser) => u.id === body.user_id);
     const newMember = { id: Date.now(), user: user || { id: body.user_id, username: '?', email: '', full_name: '?' }, role: body.role };
     sharedData.project.members.push(newMember);
     return HttpResponse.json(newMember, { status: 201 });
   }),
   http.post(`/api/projects/projects/test-project/add_member/`, async ({ request }) => {
     const body = await request.json() as Record<string, unknown>;
-    const user = sharedData.users.find((u: any) => u.id === body.user_id);
+    const user = sharedData.users.find((u: TestUser) => u.id === body.user_id);
     const newMember = { id: Date.now(), user: user || { id: body.user_id, username: '?', email: '', full_name: '?' }, role: body.role };
     sharedData.project.members.push(newMember);
     return HttpResponse.json(newMember, { status: 201 });
   }),
   http.delete(`${API_BASE}/projects/projects/test-project/remove_member/:memberId/`, ({ params }) => {
-    sharedData.project.members = sharedData.project.members.filter((m: any) => m.id !== Number(params.memberId));
+    sharedData.project.members = sharedData.project.members.filter((m: TestMember) => m.id !== Number(params.memberId));
     return new HttpResponse(null, { status: 204 });
   }),
   http.delete(`/api/projects/projects/test-project/remove_member/:memberId/`, ({ params }) => {
-    sharedData.project.members = sharedData.project.members.filter((m: any) => m.id !== Number(params.memberId));
+    sharedData.project.members = sharedData.project.members.filter((m: TestMember) => m.id !== Number(params.memberId));
     return new HttpResponse(null, { status: 204 });
   }),
 ];
@@ -142,6 +144,9 @@ const renderProjectDetail = (slug = 'test-project') => {
   return render(<ProjectDetail />, { route: `/projects/${slug}` });
 };
 
+// Shape of the react-query result objects returned by mocked hooks.
+interface QueryResult<T> { data: T | undefined; isLoading: boolean; isError: boolean; error: unknown; }
+
 // ─── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('ProjectDetail', () => {
@@ -186,13 +191,13 @@ describe('ProjectDetail', () => {
       isLoading: true,
       isError: false,
       error: null,
-    } as any);
+    } as QueryResult<typeof sharedData.project>);
     mockUseUsersFn.mockReturnValue({
       data: [],
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as QueryResult<TestUser[]>);
 
     renderProjectDetail();
 
@@ -205,13 +210,13 @@ describe('ProjectDetail', () => {
       isLoading: false,
       isError: true,
       error: { response: { data: { detail: 'Project not found' } } },
-    } as any);
+    } as QueryResult<typeof sharedData.project>);
     mockUseUsersFn.mockReturnValue({
       data: [],
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as QueryResult<TestUser[]>);
 
     renderProjectDetail();
 

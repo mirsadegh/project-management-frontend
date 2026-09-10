@@ -117,7 +117,7 @@ describe('TeamDetail', () => {
     });
 
     it('shows team not found message when team does not exist', async () => {
-      mockGetTeam.mockResolvedValue(null as any);
+      mockGetTeam.mockResolvedValue(null);
       mockGetTeamMembers.mockResolvedValue([]);
 
       render(<TeamDetail />, { route: '/teams/team-fani' });

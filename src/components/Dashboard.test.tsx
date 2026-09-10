@@ -1,7 +1,6 @@
 // src/components/Dashboard.test.tsx
 import React from 'react';
-import { render, screen, waitFor, within } from '../tests/test-utils';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from '../tests/test-utils';
 import { vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';

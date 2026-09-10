@@ -19,28 +19,24 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
   statusOptions = [],
   sortOptions = [],
 }) => {
-  // Local state for instant UI feedback while typing
+  // Local state for instant UI feedback while typing. The input uses
+  // `key={filters.query}` so that when the parent clears the query (clear
+  // button), React remounts the input and re-initializes localQuery â
+  // avoiding setState-inside-effect (react-hooks/set-state-in-effect)
+  // while preserving the previous sync behavior.
   const [localQuery, setLocalQuery] = useState(filters.query ?? '');
-
-  // Sync local state when parent clears the search (e.g., via clear button)
-  useEffect(() => {
-    setLocalQuery(filters.query ?? '');
-  }, [filters.query]);
-
-  // Debounce local query to avoid excessive API calls
   const debouncedQuery = useDebounce(localQuery, 300);
-
-  // Notify parent only when debounced value differs from current parent value
   useEffect(() => {
     if (debouncedQuery !== filters.query) {
       onFiltersChange({ ...filters, query: debouncedQuery });
     }
-  }, [debouncedQuery]);
+  }, [debouncedQuery, filters, onFiltersChange]);
 
   return (
     <div className="advanced-search" role="search">
       <div className="search-input-wrapper">
         <input
+          key={filters.query ?? '__empty'}
           type="text"
           className="search-input"
           value={localQuery}

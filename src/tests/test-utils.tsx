@@ -11,6 +11,7 @@ interface RenderWithProvidersOptions extends RenderOptions {
   route?: string;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- intentional non-component render wrapper for tests
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -63,6 +64,7 @@ const customRender = (
 };
 
 // Re-export everything from react-testing-library
+// eslint-disable-next-line react-refresh/only-export-components -- test util re-export, not a component
 export * from '@testing-library/react';
 
 // Override render method
