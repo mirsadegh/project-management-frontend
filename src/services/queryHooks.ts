@@ -30,7 +30,9 @@ export const useUnreadCount = () =>
   useQuery({
     queryKey: ['unread-count'],
     queryFn: () => notificationService.getUnreadCount(),
-    refetchInterval: 1000 * 30,
+    // 5-minute fallback poll for dead WebSocket scenarios; live updates
+    // arrive via NotificationListener query invalidation on WS push.
+    refetchInterval: 1000 * 60 * 5,
   });
 
 export const useProject = (slug: string) =>

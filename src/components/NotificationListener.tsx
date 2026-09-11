@@ -1,9 +1,9 @@
 // src/components/NotificationListener.tsx
 
 import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import websocketService from '../services/websocket';
-
 // تعریف تایپ برای یک نوتیفیکیشن برای خوانایی و ایمنی بیشتر
 interface Notification {
   id: string; // یا number، بسته به پیاده‌سازی بک‌اند شما
@@ -18,8 +18,9 @@ interface WebSocketMessage {
 }
 
 const NotificationListener = () => {
-    const WS_BASE = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
-    const WS_URL = `${WS_BASE}/ws/notifications/`;
+  const queryClient = useQueryClient();
+  const WS_BASE = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
+  const WS_URL = `${WS_BASE}/ws/notifications/`;
 
   useEffect(() => {
     // تایپ کردن پارامتر data با استفاده از تایپی که تعریف کردیم
@@ -27,6 +28,8 @@ const NotificationListener = () => {
       // اگر نوع پیام، نوتیفیکیشن بود
       if (data.type === 'notification' && data.notification) {
         const { notification } = data;
+        // Instant badge update on push; polling is dead-socket fallback.
+        queryClient.invalidateQueries({ queryKey: ['unread-count'] });
         
         // نمایش نوتیفیکیشن به صورت toast
         toast.info(notification.message, {
@@ -62,7 +65,7 @@ const NotificationListener = () => {
     return () => {
       websocketService.disconnect();
     };
-  }, []); // این افکت فقط یک بار در اولین رندر اجرا می‌شود
+  }, [queryClient]); // این افکت فقط یک بار در اولین رندر اجرا می‌شود
 
   // این کامپوننت یک "شنونده" است و چیزی در UI رندر نمی‌کند
   return null;
