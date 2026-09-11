@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectService, type ProjectMember } from '../services/projectService';
 import { useAuth } from '../services/contexts/AuthContext';
 import { useProject, useUsers } from '../services/queryHooks';
+import type { UserSummary } from '../services/authService';
 import { getRoleLabel, getStatusLabel, getPriorityLabel, formatDate } from '../utils/labels';
 import type { ApiError } from '../services/types';
 type MemberRole = ProjectMember['role'];
@@ -91,9 +92,9 @@ const ProjectDetail: React.FC = () => {
   }
 
   const memberUserIds = members.map((m) => m.user.id);
-  type AuthUser = { id: number; username: string; full_name: string; email: string };
-  const availableUsers = users.filter((u: AuthUser) => !memberUserIds.includes(u.id));
+  type AuthUser = UserSummary;
 
+  const availableUsers = users.filter((u: AuthUser) => !memberUserIds.includes(u.id));
   const handleAddMember = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedUserId === '') return;

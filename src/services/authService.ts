@@ -38,8 +38,17 @@ export interface UserProfile {
   profile_picture: string | null;
   date_joined: string;
   last_login: string | null;
+
 }
 
+// Shape of /accounts/users/ list entries (backend UserSerializer, list view).
+// Subset of UserProfile; the detail endpoint returns more fields.
+export interface UserSummary {
+  id: number;
+  username: string;
+  full_name: string;
+  email: string;
+}
 export interface RegisterData {
   username: string;
   password: string;
@@ -116,9 +125,9 @@ export const authService = {
     }
   },
 
-  async getUsers(): Promise<Array<{ id: number; username: string; full_name: string; email: string }>> {
+  async getUsers(): Promise<UserSummary[]> {
     const response = await api.get<{
-      results: Array<{ id: number; username: string; full_name: string; email: string }>;
+      results: UserSummary[];
     }>('/accounts/users/');
     return response.data.results || [];
   },
