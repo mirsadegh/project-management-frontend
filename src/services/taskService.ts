@@ -31,7 +31,7 @@ export interface UserSummary {
   username: string;
   email: string;
   full_name: string;
-  role: string;
+  role?: string;
 }
 
 export interface TaskList {

@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import TaskBoard from './TaskBoard';
+import TaskBoard from './TaskBoard/TaskBoard';
 import { mockProjects } from '../tests/mockData';
 
 // ─── Mock AuthContext ─────────────────────────────────────────────────────────
