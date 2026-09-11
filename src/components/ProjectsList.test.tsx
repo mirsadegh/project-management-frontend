@@ -45,7 +45,15 @@ export const projectHandlers = [
     return HttpResponse.json({ id: 1, username: 'testuser', email: 'test@example.com', full_name: 'Test User', role: 'DEV' });
   }),
   http.get(`${API_BASE}/projects/projects/`, () => {
-    return HttpResponse.json({ projects: mockProjects });
+    return HttpResponse.json({
+      count: mockProjects.length,
+      next: null,
+      previous: null,
+      total_pages: 1,
+      current_page: 1,
+      page_size: 15,
+      results: mockProjects,
+    });
   }),
   http.post(`${API_BASE}/projects/projects/`, async ({ request }) => {
     const body = await request.json() as Record<string, unknown>;

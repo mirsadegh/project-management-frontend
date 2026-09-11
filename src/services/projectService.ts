@@ -1,4 +1,5 @@
 import api from './api';
+import type { PaginatedResponse } from './pagination';
 
 export interface Project {
   id: number;
@@ -81,17 +82,11 @@ export interface SearchFilters {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface PaginatedProjectsResponse {
-  pagination: {
-    count: number;
-    total_pages: number;
-    current_page: number;
-    page_size: number;
-    next: string | null;
-    previous: string | null;
-  };
-  projects: Project[];
-}
+// M-4: projects now use the standard pagination envelope (count, next,
+// previous, total_pages, current_page, results) matching the
+// StandardResultsSetPagination backend default.
+export type PaginatedProjectsResponse = PaginatedResponse<Project>;
+
 
 export const projectService = {
   async getProjects(filters?: ProjectFilters): Promise<Project[]> {
@@ -101,7 +96,7 @@ export const projectService = {
     if (filters?.search) params.append('search', filters.search);
 
     const response = await api.get<PaginatedProjectsResponse>(`/projects/projects/?${params.toString()}`);
-    return response.data.projects;
+    return response.data.results ?? [];
   },
 
   async searchProjects(filters: SearchFilters): Promise<Project[]> {
@@ -118,7 +113,7 @@ export const projectService = {
     }
 
     const response = await api.get<PaginatedProjectsResponse>(`/projects/projects/?${params.toString()}`);
-    return response.data.projects;
+    return response.data.results ?? [];
   },
 
   async getProject(slug: string): Promise<Project> {

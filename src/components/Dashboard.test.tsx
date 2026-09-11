@@ -135,7 +135,15 @@ export const dashboardHandlers = [
     return HttpResponse.json({ id: 1, username: 'testuser', email: 'test@example.com', full_name: 'کاربر آزمایشی', role: 'DEV' });
   }),
   http.get(`${API_BASE}/projects/projects/`, () => {
-    return HttpResponse.json({ projects: mockProjects });
+    return HttpResponse.json({
+      count: mockProjects.length,
+      next: null,
+      previous: null,
+      total_pages: 1,
+      current_page: 1,
+      page_size: 15,
+      results: mockProjects,
+    });
   }),
   http.get(`${API_BASE}/tasks/my-tasks/`, () => {
     return HttpResponse.json(mockTasks);
